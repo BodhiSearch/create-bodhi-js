@@ -9,9 +9,13 @@
 import { execSync } from 'child_process';
 import readline from 'readline';
 
-function executeGitCommand(command) {
+function executeGitCommand(command, suppressStderr = false) {
   try {
-    return execSync(command, { encoding: 'utf8' }).trim();
+    const options = { encoding: 'utf8' };
+    if (suppressStderr) {
+      options.stdio = ['pipe', 'pipe', 'ignore'];
+    }
+    return execSync(command, options).trim();
   } catch (error) {
     // For some git commands, non-zero exit is expected (e.g., tag doesn't exist)
     return null;
@@ -33,7 +37,7 @@ function promptUser(question) {
 }
 
 function tagExists(tagName) {
-  const result = executeGitCommand(`git rev-parse "${tagName}"`);
+  const result = executeGitCommand(`git rev-parse "${tagName}"`, true);
   return result !== null;
 }
 
