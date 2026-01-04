@@ -17,6 +17,10 @@ const TEMPLATE_FILES = [
   'public/404.html',
   'README.md',
   'playwright.config.ts',
+  'CONTRIBUTING.md',
+  'src/App.tsx',
+  '.github/SECURITY.md',
+  '.github/ISSUE_TEMPLATE/config.yml',
 ];
 
 export async function processTemplates(targetDir: string, vars: TemplateVars) {

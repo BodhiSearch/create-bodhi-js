@@ -69,8 +69,8 @@ export async function create(projectName: string | undefined, options: CreateOpt
 
   if (enableGithubPages) {
     const orgResult = await p.text({
-      message: 'GitHub organization/username:',
-      placeholder: 'my-org',
+      message: 'Github Repo Owner (User/Org):',
+      placeholder: '<gh-user>',
     });
 
     if (p.isCancel(orgResult)) {
