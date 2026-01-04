@@ -1,0 +1,70 @@
+{
+  "name": "create-bodhi-js",
+  "version": "0.1.0",
+  "description": "Scaffold Bodhi-powered applications with React, TypeScript, Vite, and more",
+  "type": "module",
+  "bin": {
+    "create-bodhi-js": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "check": "npm run lint && npm run typecheck",
+    "check:fix": "npm run lint:fix && npm run typecheck",
+    "test": "echo \"Tests coming soon\" && exit 0",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "create-bodhi-js",
+    "bodhi",
+    "bodhi-js",
+    "react",
+    "vite",
+    "typescript",
+    "template",
+    "scaffolding",
+    "cli"
+  ],
+  "author": "BodhiSearch",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BodhiSearch/create-bodhi-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BodhiSearch/create-bodhi-js/issues"
+  },
+  "homepage": "https://github.com/BodhiSearch/create-bodhi-js#readme",
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "commander": "^14.0.2",
+    "giget": "^2.0.0",
+    "handlebars": "^4.7.8",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^25.0.3",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^17.0.0",
+    "prettier": "^3.7.4",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
