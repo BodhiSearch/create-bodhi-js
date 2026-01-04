@@ -105,6 +105,7 @@ jobs:
         run: |
           # Update package.json to next minor version with -dev suffix
           npm version ${{ steps.version.outputs.next_version }} --no-git-tag-version
+          npm install
           git add package.json package-lock.json
           git commit -m "chore: bump version to ${{ steps.version.outputs.next_version }} after release"
           git push origin main
