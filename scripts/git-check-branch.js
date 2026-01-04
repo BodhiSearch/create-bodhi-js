@@ -12,7 +12,7 @@ function getCurrentBranch() {
   try {
     const branch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
     return branch;
-  } catch (error) {
+  } catch {
     console.error('Error: Unable to get current git branch');
     process.exit(1);
   }
@@ -21,11 +21,11 @@ function getCurrentBranch() {
 function promptUser(question) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
+  return new Promise(resolve => {
+    rl.question(question, answer => {
       rl.close();
       resolve(answer.toLowerCase());
     });
@@ -55,7 +55,7 @@ async function checkBranch() {
 
 // If run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  checkBranch().catch((error) => {
+  checkBranch().catch(error => {
     console.error('Error:', error.message);
     process.exit(1);
   });

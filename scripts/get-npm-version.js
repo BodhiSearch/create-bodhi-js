@@ -9,51 +9,55 @@
 import https from 'https';
 
 function fetchNpmVersion(packageName) {
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     const url = `https://registry.npmjs.org/${encodeURIComponent(packageName)}/latest`;
 
-    const request = https.get(url, {
-      headers: {
-        'User-Agent': 'Bodhi Release Script'
+    const request = https.get(
+      url,
+      {
+        headers: {
+          'User-Agent': 'Bodhi Release Script',
+        },
+      },
+      response => {
+        let data = '';
+
+        response.on('data', chunk => {
+          data += chunk;
+        });
+
+        response.on('end', () => {
+          try {
+            if (response.statusCode === 404) {
+              // Package not found, return default version
+              resolve('0.0.0');
+              return;
+            }
+
+            if (response.statusCode !== 200) {
+              console.error(`npm registry returned status ${response.statusCode}`);
+              resolve('0.0.0');
+              return;
+            }
+
+            const packageInfo = JSON.parse(data);
+            const version = packageInfo.version;
+
+            if (version && /^\d+\.\d+\.\d+$/.test(version)) {
+              resolve(version);
+            } else {
+              console.error('Invalid version format received from npm');
+              resolve('0.0.0');
+            }
+          } catch (error) {
+            console.error('Error parsing npm response:', error.message);
+            resolve('0.0.0');
+          }
+        });
       }
-    }, (response) => {
-      let data = '';
+    );
 
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      response.on('end', () => {
-        try {
-          if (response.statusCode === 404) {
-            // Package not found, return default version
-            resolve('0.0.0');
-            return;
-          }
-
-          if (response.statusCode !== 200) {
-            console.error(`npm registry returned status ${response.statusCode}`);
-            resolve('0.0.0');
-            return;
-          }
-
-          const packageInfo = JSON.parse(data);
-          const version = packageInfo.version;
-
-          if (version && /^\d+\.\d+\.\d+$/.test(version)) {
-            resolve(version);
-          } else {
-            console.error('Invalid version format received from npm');
-            resolve('0.0.0');
-          }
-        } catch (error) {
-          console.error('Error parsing npm response:', error.message);
-          resolve('0.0.0');
-        }
-      });
-    });
-
-    request.on('error', (error) => {
+    request.on('error', error => {
       console.error('Error fetching from npm:', error.message);
       resolve('0.0.0');
     });

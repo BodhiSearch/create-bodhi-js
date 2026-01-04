@@ -22,11 +22,11 @@ function executeGitCommand(command) {
 function promptUser(question) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
+  return new Promise(resolve => {
+    rl.question(question, answer => {
       rl.close();
       resolve(answer.toLowerCase());
     });
@@ -83,7 +83,7 @@ async function checkGitSync() {
 
 // If run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  checkGitSync().catch((error) => {
+  checkGitSync().catch(error => {
     console.error('Error:', error.message);
     process.exit(1);
   });

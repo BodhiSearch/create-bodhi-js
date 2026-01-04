@@ -16,7 +16,7 @@ function executeGitCommand(command, suppressStderr = false) {
       options.stdio = ['pipe', 'pipe', 'ignore'];
     }
     return execSync(command, options).trim();
-  } catch (error) {
+  } catch {
     // For some git commands, non-zero exit is expected (e.g., tag doesn't exist)
     return null;
   }
@@ -25,11 +25,11 @@ function executeGitCommand(command, suppressStderr = false) {
 function promptUser(question) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
+  return new Promise(resolve => {
+    rl.question(question, answer => {
       rl.close();
       resolve(answer.toLowerCase());
     });
@@ -59,7 +59,7 @@ async function deleteTagIfExists(tagName) {
     try {
       executeGitCommand(`git tag -d "${tagName}"`);
       console.log(`✓ Deleted local tag ${tagName}`);
-    } catch (error) {
+    } catch {
       console.log(`Note: Local tag ${tagName} may not exist`);
     }
 
@@ -67,7 +67,7 @@ async function deleteTagIfExists(tagName) {
     try {
       executeGitCommand(`git push --delete origin "${tagName}"`);
       console.log(`✓ Deleted remote tag ${tagName}`);
-    } catch (error) {
+    } catch {
       console.log(`Note: Remote tag ${tagName} may not exist`);
     }
 
@@ -88,7 +88,7 @@ function main() {
     process.exit(1);
   }
 
-  deleteTagIfExists(tagName).catch((error) => {
+  deleteTagIfExists(tagName).catch(error => {
     console.error('Error:', error.message);
     process.exit(1);
   });
