@@ -17,6 +17,14 @@ export async function create(projectName: string | undefined, options: CreateOpt
   let targetDir = projectName;
   const template = options.template;
 
+  // Validate project name if provided via CLI argument
+  if (targetDir) {
+    if (!/^[a-z0-9-]+$/.test(targetDir)) {
+      p.log.error('Invalid project name. Use lowercase letters, numbers, and hyphens only (e.g., my-chat-app)');
+      process.exit(1);
+    }
+  }
+
   // Prompt for project name if not provided
   if (!targetDir) {
     const result = await p.text({
