@@ -8,6 +8,7 @@ export interface CreateOptions {
   install: boolean;
   git: boolean;
   githubPages?: boolean;
+  githubOrg?: string;
 }
 
 export async function create(projectName: string | undefined, options: CreateOptions) {
@@ -56,7 +57,7 @@ export async function create(projectName: string | undefined, options: CreateOpt
 
   // GitHub Pages setup
   let enableGithubPages = options.githubPages ?? false;
-  if (!options.githubPages) {
+  if (options.githubPages === undefined) {
     const result = await p.confirm({
       message: 'Enable GitHub Pages deployment?',
       initialValue: false,
@@ -76,17 +77,22 @@ export async function create(projectName: string | undefined, options: CreateOpt
   let pathSegmentsToKeep = 0;
 
   if (enableGithubPages) {
-    const orgResult = await p.text({
-      message: 'Github Repo Owner (User/Org):',
-      placeholder: '<gh-user>',
-    });
+    // Use CLI option if provided, otherwise prompt
+    if (options.githubOrg) {
+      githubOrg = options.githubOrg;
+    } else {
+      const orgResult = await p.text({
+        message: 'Github Repo Owner (User/Org):',
+        placeholder: '<gh-user>',
+      });
 
-    if (p.isCancel(orgResult)) {
-      p.cancel('Operation cancelled');
-      process.exit(0);
+      if (p.isCancel(orgResult)) {
+        p.cancel('Operation cancelled');
+        process.exit(0);
+      }
+
+      githubOrg = orgResult as string;
     }
-
-    githubOrg = orgResult as string;
     basePath = `/${targetDir}/`;
     pathSegmentsToKeep = 1;
   }

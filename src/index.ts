@@ -12,6 +12,7 @@ program
   .option('--no-install', 'Skip dependency installation')
   .option('--no-git', 'Skip git initialization')
   .option('--github-pages', 'Enable GitHub Pages deployment setup')
+  .option('--github-org <org>', 'GitHub repository owner (user/org)')
   .action(async (projectName, options) => {
     await create(projectName, options);
   });
