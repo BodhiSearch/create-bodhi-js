@@ -31,15 +31,25 @@ export async function processTemplates(targetDir: string, vars: TemplateVars) {
       // Read file
       const content = await fs.readFile(filePath, 'utf-8');
 
-      // Compile and render template
-      const template = Handlebars.compile(content);
-      const rendered = template(vars);
+      let rendered: string;
+
+      // Special handling for src/App.tsx - use simple string replacement
+      // to avoid Handlebars parsing JSX syntax
+      if (file === 'src/App.tsx') {
+        rendered = content.replace(/\{\{projectName\}\}/g, vars.projectName);
+      } else {
+        // Compile and render template with Handlebars
+        const template = Handlebars.compile(content);
+        rendered = template(vars);
+      }
 
       // Write back
       await fs.writeFile(filePath, rendered, 'utf-8');
-    } catch {
+      console.log(`✓ Processed: ${file}`);
+    } catch (error) {
       // File might not exist (e.g., 404.html if no GitHub Pages)
       // That's okay, skip it
+      console.log(`✗ Skipped: ${file} (${(error as Error).message})`);
     }
   }
 }
