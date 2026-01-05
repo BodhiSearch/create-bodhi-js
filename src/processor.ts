@@ -45,11 +45,9 @@ export async function processTemplates(targetDir: string, vars: TemplateVars) {
 
       // Write back
       await fs.writeFile(filePath, rendered, 'utf-8');
-      console.log(`✓ Processed: ${file}`);
-    } catch (error) {
+    } catch {
       // File might not exist (e.g., 404.html if no GitHub Pages)
       // That's okay, skip it
-      console.log(`✗ Skipped: ${file} (${(error as Error).message})`);
     }
   }
 }
