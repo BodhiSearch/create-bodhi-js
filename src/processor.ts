@@ -31,17 +31,9 @@ export async function processTemplates(targetDir: string, vars: TemplateVars) {
       // Read file
       const content = await fs.readFile(filePath, 'utf-8');
 
-      let rendered: string;
-
-      // Special handling for src/App.tsx - use simple string replacement
-      // to avoid Handlebars parsing JSX syntax
-      if (file === 'src/App.tsx') {
-        rendered = content.replace(/\{\{projectName\}\}/g, vars.projectName);
-      } else {
-        // Compile and render template with Handlebars
-        const template = Handlebars.compile(content);
-        rendered = template(vars);
-      }
+      // Compile and render template
+      const template = Handlebars.compile(content);
+      const rendered = template(vars);
 
       // Write back
       await fs.writeFile(filePath, rendered, 'utf-8');
