@@ -7,3 +7,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Test environment variables
+.env.test
+
+# Playwright outputs
+playwright-report
+test-results

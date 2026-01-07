@@ -9,9 +9,18 @@ export interface CreateOptions {
   git: boolean;
   githubPages?: boolean;
   githubOrg?: string;
+  devClientId?: string;
+  prodClientId?: string;
+  ci?: boolean;
 }
 
 export async function create(projectName: string | undefined, options: CreateOptions) {
+  if (options.ci) {
+    process.env.CI = 'true';
+    process.env.NO_COLOR = '1';
+    delete process.env.FORCE_COLOR;
+  }
+
   console.log();
   p.intro(pc.bgCyan(pc.black(' create-bodhi-js ')));
 
@@ -113,6 +122,8 @@ export async function create(projectName: string | undefined, options: CreateOpt
       pathSegmentsToKeep,
       install: options.install,
       git: options.git,
+      devClientId: options.devClientId,
+      prodClientId: options.prodClientId,
     });
 
     spinner.stop('Project scaffolded successfully!');

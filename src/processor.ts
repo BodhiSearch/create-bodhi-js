@@ -8,6 +8,8 @@ interface TemplateVars {
   githubPages: boolean;
   basePath: string;
   pathSegmentsToKeep: number;
+  devClientId?: string;
+  prodClientId?: string;
 }
 
 const TEMPLATE_FILES = [
@@ -21,6 +23,8 @@ const TEMPLATE_FILES = [
   'src/App.tsx',
   '.github/SECURITY.md',
   '.github/ISSUE_TEMPLATE/config.yml',
+  '.github/workflows/ci.yml',
+  '.github/workflows/deploy-pages.yml',
 ];
 
 export async function processTemplates(targetDir: string, vars: TemplateVars) {

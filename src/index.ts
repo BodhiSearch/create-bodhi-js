@@ -13,6 +13,9 @@ program
   .option('--no-git', 'Skip git initialization')
   .option('--github-pages', 'Enable GitHub Pages deployment setup')
   .option('--github-org <org>', 'GitHub repository owner (user/org)')
+  .option('--dev-client-id <id>', 'Development client ID (for .env.local and CI)')
+  .option('--prod-client-id <id>', 'Production client ID (for GitHub Pages deploy)')
+  .option('--ci', 'Run in CI mode (disable animations)')
   .action(async (projectName, options) => {
     await create(projectName, options);
   });

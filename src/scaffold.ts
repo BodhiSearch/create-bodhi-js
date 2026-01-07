@@ -16,6 +16,8 @@ export interface ScaffoldOptions {
   pathSegmentsToKeep: number;
   install: boolean;
   git: boolean;
+  devClientId?: string;
+  prodClientId?: string;
 }
 
 export async function scaffold(options: ScaffoldOptions) {
@@ -28,6 +30,8 @@ export async function scaffold(options: ScaffoldOptions) {
     pathSegmentsToKeep,
     install,
     git,
+    devClientId,
+    prodClientId,
   } = options;
 
   const targetDir = path.resolve(process.cwd(), projectName);
@@ -46,6 +50,7 @@ export async function scaffold(options: ScaffoldOptions) {
   await downloadTemplate(templateUrl, {
     dir: targetDir,
     offline: false,
+    force: true,
   });
 
   // Move files from template/ subdirectory to root if it exists
@@ -81,7 +86,17 @@ export async function scaffold(options: ScaffoldOptions) {
     githubPages,
     basePath,
     pathSegmentsToKeep,
+    devClientId,
+    prodClientId,
   });
+
+  // Create .env.local if devClientId provided
+  if (devClientId) {
+    const envContent = `VITE_BODHI_APP_CLIENT_ID=${devClientId}
+VITE_BODHI_AUTH_SERVER_URL=https://main-id.getbodhi.app/realms/bodhi
+`;
+    await fs.writeFile(path.join(targetDir, '.env.local'), envContent, 'utf-8');
+  }
 
   // Conditional file deletion
   if (!githubPages) {
