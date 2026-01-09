@@ -102,14 +102,6 @@ export async function scaffold(options: ScaffoldOptions) {
     prodClientId,
   });
 
-  // Create .env.local if devClientId provided
-  if (devClientId) {
-    const envContent = `VITE_BODHI_APP_CLIENT_ID=${devClientId}
-VITE_BODHI_AUTH_SERVER_URL=https://main-id.getbodhi.app/realms/bodhi
-`;
-    await fs.writeFile(path.join(targetDir, '.env.local'), envContent, 'utf-8');
-  }
-
   // Conditional file deletion
   if (!githubPages) {
     const filesToDelete = [
@@ -125,8 +117,8 @@ VITE_BODHI_AUTH_SERVER_URL=https://main-id.getbodhi.app/realms/bodhi
     }
   }
 
-  // Remove template.json and other meta files
-  const metaFiles = ['template.json', 'test-template.sh', 'TECH.md'];
+  // Remove template.json, template .env.local, template/ directory, and other meta files
+  const metaFiles = ['template.json', 'test-template.sh', 'TECH.md', '.env.local'];
   for (const file of metaFiles) {
     try {
       await fs.unlink(path.join(targetDir, file));
@@ -135,10 +127,23 @@ VITE_BODHI_AUTH_SERVER_URL=https://main-id.getbodhi.app/realms/bodhi
     }
   }
 
-  // Initialize git
+  // Remove template/ directory if it still exists
+  try {
+    await fs.rm(path.join(targetDir, 'template'), { recursive: true, force: true });
+  } catch {
+    // Directory might not exist
+  }
+
+  // Initialize git and install dependencies
   if (git) {
     try {
       await execAsync('git init', { cwd: targetDir });
+
+      // Install before commit so package-lock.json is included
+      if (install) {
+        await execAsync('npm install', { cwd: targetDir });
+      }
+
       await execAsync('git add .', { cwd: targetDir });
       await execAsync('git commit -m "chore: initial commit from create-bodhi-js"', {
         cwd: targetDir,
@@ -147,10 +152,16 @@ VITE_BODHI_AUTH_SERVER_URL=https://main-id.getbodhi.app/realms/bodhi
       // Git init failed, that's okay
       console.warn('Warning: Git initialization failed');
     }
+  } else if (install) {
+    // No git, but still install dependencies
+    await execAsync('npm install', { cwd: targetDir });
   }
 
-  // Install dependencies
-  if (install) {
-    await execAsync('npm install', { cwd: targetDir });
+  // Create .env.local AFTER git commit (should not be committed - contains secrets)
+  if (devClientId) {
+    const envContent = `VITE_BODHI_APP_CLIENT_ID=${devClientId}
+VITE_BODHI_AUTH_SERVER_URL=https://main-id.getbodhi.app/realms/bodhi
+`;
+    await fs.writeFile(path.join(targetDir, '.env.local'), envContent, 'utf-8');
   }
 }

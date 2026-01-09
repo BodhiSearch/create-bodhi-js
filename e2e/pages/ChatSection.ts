@@ -8,6 +8,11 @@ export class ChatSection extends BasePage {
     });
   }
 
+  async selectModel(modelName: string): Promise<void> {
+    await this.page.getByTestId('model-selector').click();
+    await this.page.getByRole('option', { name: modelName }).click();
+  }
+
   async sendMessageAndWaitForResponse(message: string): Promise<void> {
     await this.page.getByTestId('chat-input').fill(message);
     await this.page.getByTestId('send-button').click();

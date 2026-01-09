@@ -128,11 +128,21 @@ async function waitForServer(serverUrl: string): Promise<void> {
   }
 }
 
-export function verifyProjectStructure(projectDir: string, devClientId: string): void {
+export function verifyProjectStructure(
+  projectDir: string,
+  devClientId: string,
+  options?: { noInstall?: boolean }
+): void {
+  const { noInstall = false } = options ?? {};
+
   const checks = [
-    { file: 'package.json', exists: true },
-    { file: '.env.local', exists: true },
+    { file: 'package.json', exists: true, committed: true },
+    { file: '.env.local', exists: true, committed: false },
   ];
+
+  if (!noInstall) {
+    checks.push({ file: 'package-lock.json', exists: true, committed: true });
+  }
 
   for (const check of checks) {
     const filePath = path.join(projectDir, check.file);
@@ -142,8 +152,43 @@ export function verifyProjectStructure(projectDir: string, devClientId: string):
     }
   }
 
+  const gitLog = execSync('git log --name-only -1', {
+    cwd: projectDir,
+    encoding: 'utf-8',
+  });
+
+  const committedFiles = gitLog
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
+
+  for (const check of checks) {
+    if (!check.exists) continue;
+
+    const isInGit = committedFiles.includes(check.file);
+    if (check.committed && !isInGit) {
+      throw new Error(`Expected ${check.file} to be committed in git`);
+    }
+    if (!check.committed && isInGit) {
+      throw new Error(`Expected ${check.file} to NOT be committed in git`);
+    }
+  }
+
   const envContent = fs.readFileSync(path.join(projectDir, '.env.local'), 'utf-8');
   if (!envContent.includes(`VITE_BODHI_APP_CLIENT_ID=${devClientId}`)) {
     throw new Error(`Expected .env.local to contain dev client ID`);
+  }
+
+  if (!noInstall) {
+    execSync('npm run lint:fix', { cwd: projectDir, stdio: 'inherit' });
+
+    const gitStatus = execSync('git status --porcelain', {
+      cwd: projectDir,
+      encoding: 'utf-8',
+    });
+
+    if (gitStatus.trim()) {
+      throw new Error(`Expected no local changes after lint:fix, but found:\n${gitStatus}`);
+    }
   }
 }

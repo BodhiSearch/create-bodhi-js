@@ -50,6 +50,7 @@ test.describe('create-bodhi-js E2E', () => {
     await app.auth.expectAuthenticated();
 
     await app.chat.expectModelsLoaded();
+    await app.chat.selectModel('bartowski/google_gemma-3-1b-it-GGUF:Q4_K_M');
     await app.chat.sendMessageAndWaitForResponse('What day comes after Monday?');
     await app.chat.expectAssistantResponseContains(/tuesday/i);
   });
