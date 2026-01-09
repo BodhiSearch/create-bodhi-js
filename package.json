@@ -1,6 +1,6 @@
 {
   "name": "create-bodhi-js",
-  "version": "0.7.0-dev",
+  "version": "0.8.0-dev",
   "description": "Scaffold Bodhi-powered applications with React, TypeScript, Vite, and more",
   "type": "module",
   "bin": {
