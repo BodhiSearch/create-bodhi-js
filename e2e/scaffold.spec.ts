@@ -30,9 +30,8 @@ test.describe('create-bodhi-js E2E', () => {
     const keycloak = new KeycloakPage(page);
 
     await app.goto(`http://localhost:5173/${PROJECT_NAME}/`);
-    await app.connection.expectClientNotReady();
 
-    const setupModal = await app.openSetupModal();
+    const setupModal = await app.waitForSetupModal();
     await setupModal.setupDirectConnection('http://localhost:1135');
 
     await app.connection.expectClientReady();

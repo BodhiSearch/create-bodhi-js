@@ -28,6 +28,12 @@ export class AppPage extends BasePage {
     return modal;
   }
 
+  async waitForSetupModal(): Promise<SetupModal> {
+    const modal = new SetupModal(this.page);
+    await modal.waitForReady();
+    return modal;
+  }
+
   async waitForRedirectBack(urlPattern: RegExp): Promise<void> {
     await this.page.waitForURL(urlPattern, { timeout: 30000 });
   }
