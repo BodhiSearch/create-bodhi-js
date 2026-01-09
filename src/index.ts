@@ -12,6 +12,7 @@ program
   .option('--no-install', 'Skip dependency installation')
   .option('--no-git', 'Skip git initialization')
   .option('--github-pages', 'Enable GitHub Pages deployment setup')
+  .option('--no-github-pages', 'Disable GitHub Pages deployment setup')
   .option('--github-org <org>', 'GitHub repository owner (user/org)')
   .option('--dev-client-id <id>', 'Development client ID (for .env.local and CI)')
   .option('--prod-client-id <id>', 'Production client ID (for GitHub Pages deploy)')

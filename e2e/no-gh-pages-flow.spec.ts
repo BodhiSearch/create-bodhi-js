@@ -15,7 +15,7 @@ const PROJECT_NAME = 'my-test-app';
 const DEV_CLIENT_ID = process.env.TEST_DEV_CLIENT_ID!;
 const TEMPLATE_PATH = path.resolve(__dirname, '../../template-bodhi-react-vite');
 
-test.describe('gh-pages-flow E2E', () => {
+test.describe('no-github-pages-flow E2E', () => {
   let scaffold: ScaffoldResult;
 
   test.beforeAll(async () => {
@@ -23,18 +23,17 @@ test.describe('gh-pages-flow E2E', () => {
       projectName: PROJECT_NAME,
       template: TEMPLATE_PATH,
       devClientId: DEV_CLIENT_ID,
-      githubOrg: 'tempOrg',
-      githubPages: true,
+      githubPages: false,
     });
 
-    verifyProjectStructure(scaffold.projectDir, DEV_CLIENT_ID, { githubPages: true });
+    verifyProjectStructure(scaffold.projectDir, DEV_CLIENT_ID, { githubPages: false });
   });
 
   test.afterAll(async () => {
     await scaffold.cleanup();
   });
 
-  test('full authentication and chat flow', async ({ page }) => {
-    await assertChatFlow(page, `http://localhost:5173/${PROJECT_NAME}/`, new RegExp(PROJECT_NAME));
+  test('full authentication and chat flow at root path', async ({ page }) => {
+    await assertChatFlow(page, 'http://localhost:5173/', /localhost:5173\//);
   });
 });

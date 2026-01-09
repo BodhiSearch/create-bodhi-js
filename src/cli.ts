@@ -106,6 +106,8 @@ export async function create(projectName: string | undefined, options: CreateOpt
     }
     basePath = `/${targetDir}/`;
     pathSegmentsToKeep = 1;
+  } else {
+    githubOrg = 'YOUR_ORG';
   }
 
   // Scaffold project

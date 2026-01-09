@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import type { Page } from '@playwright/test';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +13,7 @@ export interface ScaffoldResult {
   projectDir: string;
   devServer?: ChildProcess;
   cleanup: () => Promise<void>;
+  basePath: string;
 }
 
 export interface ScaffoldOptions {
@@ -73,7 +75,7 @@ export async function scaffoldProject(options: ScaffoldOptions): Promise<Scaffol
 
   let devServer: ChildProcess | undefined;
   if (!skipDevServer) {
-    devServer = await startDevServer(projectDir, projectName);
+    devServer = await startDevServer(projectDir, projectName, githubPages);
   }
 
   const cleanup = async () => {
@@ -85,10 +87,16 @@ export async function scaffoldProject(options: ScaffoldOptions): Promise<Scaffol
     }
   };
 
-  return { tempDir, projectDir, devServer, cleanup };
+  const basePath = githubPages ? `/${projectName}/` : '/';
+
+  return { tempDir, projectDir, devServer, cleanup, basePath };
 }
 
-async function startDevServer(projectDir: string, projectName: string): Promise<ChildProcess> {
+async function startDevServer(
+  projectDir: string,
+  projectName: string,
+  githubPages: boolean
+): Promise<ChildProcess> {
   const devServer = spawn('npm', ['run', 'dev'], {
     cwd: projectDir,
     stdio: 'pipe',
@@ -103,7 +111,8 @@ async function startDevServer(projectDir: string, projectName: string): Promise<
     console.error(`[dev server error] ${data.toString()}`);
   });
 
-  await waitForServer(`http://localhost:5173/${projectName}/`);
+  const basePath = githubPages ? `/${projectName}/` : '/';
+  await waitForServer(`http://localhost:5173${basePath}`);
 
   return devServer;
 }
@@ -128,12 +137,43 @@ async function waitForServer(serverUrl: string): Promise<void> {
   }
 }
 
+export async function assertChatFlow(
+  page: Page,
+  baseUrl: string,
+  redirectPattern: RegExp
+): Promise<void> {
+  const { AppPage, KeycloakPage } = await import('./pages/index.js');
+  const BODHI_USERNAME = process.env.TEST_BODHI_USERNAME!;
+  const BODHI_PASSWORD = process.env.TEST_BODHI_PASSWORD!;
+
+  const app = new AppPage(page);
+  const keycloak = new KeycloakPage(page);
+
+  await app.goto(baseUrl);
+
+  const setupModal = await app.waitForSetupModal();
+  await setupModal.setupDirectConnection('http://localhost:1135');
+
+  await app.connection.expectClientReady();
+  await app.connection.expectServerReady();
+
+  await app.auth.clickLogin();
+  await keycloak.fillCredentialsAndSubmit(BODHI_USERNAME, BODHI_PASSWORD);
+  await app.waitForRedirectBack(redirectPattern);
+  await app.auth.expectAuthenticated();
+
+  await app.chat.expectModelsLoaded();
+  await app.chat.selectModel('bartowski/google_gemma-3-1b-it-GGUF:Q4_K_M');
+  await app.chat.sendMessageAndWaitForResponse('What day comes after Monday?');
+  await app.chat.expectAssistantResponseContains(/tuesday/i);
+}
+
 export function verifyProjectStructure(
   projectDir: string,
   devClientId: string,
-  options?: { noInstall?: boolean }
+  options?: { noInstall?: boolean; githubPages?: boolean }
 ): void {
-  const { noInstall = false } = options ?? {};
+  const { noInstall = false, githubPages = true } = options ?? {};
 
   const checks = [
     { file: 'package.json', exists: true, committed: true },
@@ -189,6 +229,16 @@ export function verifyProjectStructure(
 
     if (gitStatus.trim()) {
       throw new Error(`Expected no local changes after lint:fix, but found:\n${gitStatus}`);
+    }
+  }
+
+  if (!githubPages) {
+    const absentFiles = ['.github/workflows/deploy-pages.yml', 'public/404.html'];
+    for (const file of absentFiles) {
+      const filePath = path.join(projectDir, file);
+      if (fs.existsSync(filePath)) {
+        throw new Error(`Expected ${file} to NOT exist when githubPages=false`);
+      }
     }
   }
 }
