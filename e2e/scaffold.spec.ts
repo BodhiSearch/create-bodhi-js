@@ -1,11 +1,17 @@
 import { test } from '@playwright/test';
 import { scaffoldProject, verifyProjectStructure, type ScaffoldResult } from './test-utils.js';
 import { AppPage, KeycloakPage } from './pages/index.js';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PROJECT_NAME = 'my-test-app';
 const DEV_CLIENT_ID = process.env.TEST_DEV_CLIENT_ID!;
 const BODHI_USERNAME = process.env.TEST_BODHI_USERNAME!;
 const BODHI_PASSWORD = process.env.TEST_BODHI_PASSWORD!;
+const TEMPLATE_PATH = path.resolve(__dirname, '../../template-bodhi-react-vite');
 
 test.describe('create-bodhi-js E2E', () => {
   let scaffold: ScaffoldResult;
@@ -13,6 +19,7 @@ test.describe('create-bodhi-js E2E', () => {
   test.beforeAll(async () => {
     scaffold = await scaffoldProject({
       projectName: PROJECT_NAME,
+      template: TEMPLATE_PATH,
       devClientId: DEV_CLIENT_ID,
       githubOrg: 'tempOrg',
       githubPages: true,

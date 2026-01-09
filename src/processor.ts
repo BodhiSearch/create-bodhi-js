@@ -41,9 +41,13 @@ export async function processTemplates(targetDir: string, vars: TemplateVars) {
 
       // Write back
       await fs.writeFile(filePath, rendered, 'utf-8');
-    } catch {
-      // File might not exist (e.g., 404.html if no GitHub Pages)
-      // That's okay, skip it
+    } catch (error) {
+      // Only ignore ENOENT (file not found) - e.g., 404.html if no GitHub Pages
+      // Fail loudly on other errors (Handlebars compilation, undefined variables, etc.)
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+        continue;
+      }
+      throw new Error(`Failed to process template ${file}: ${error}`);
     }
   }
 }

@@ -10,19 +10,32 @@ const __dirname = path.dirname(__filename);
 export interface ScaffoldResult {
   tempDir: string;
   projectDir: string;
-  devServer: ChildProcess;
+  devServer?: ChildProcess;
   cleanup: () => Promise<void>;
 }
 
 export interface ScaffoldOptions {
   projectName: string;
-  devClientId: string;
+  devClientId?: string;
   githubOrg?: string;
   githubPages?: boolean;
+  template?: string;
+  prodClientId?: string;
+  noInstall?: boolean;
+  skipDevServer?: boolean;
 }
 
 export async function scaffoldProject(options: ScaffoldOptions): Promise<ScaffoldResult> {
-  const { projectName, devClientId, githubOrg = 'tempOrg', githubPages = true } = options;
+  const {
+    projectName,
+    devClientId,
+    githubOrg = 'tempOrg',
+    githubPages = true,
+    template,
+    prodClientId,
+    noInstall = false,
+    skipDevServer = false,
+  } = options;
 
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'create-bodhi-js-e2e-'));
   const projectDir = path.join(tempDir, projectName);
@@ -37,11 +50,16 @@ export async function scaffoldProject(options: ScaffoldOptions): Promise<Scaffol
     cliPath,
     projectName,
     '--ci',
-    githubPages ? '--github-pages' : '',
-    githubPages ? '--github-org' : '',
-    githubPages ? githubOrg : '',
-    '--dev-client-id',
-    devClientId,
+    githubPages ? '--github-pages' : '--no-github-pages',
+    githubPages && githubOrg ? '--github-org' : '',
+    githubPages && githubOrg ? githubOrg : '',
+    devClientId ? '--dev-client-id' : '',
+    devClientId ? devClientId : '',
+    prodClientId ? '--prod-client-id' : '',
+    prodClientId ? prodClientId : '',
+    template ? '--template' : '',
+    template ? template : '',
+    noInstall ? '--no-install' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -53,7 +71,10 @@ export async function scaffoldProject(options: ScaffoldOptions): Promise<Scaffol
     timeout: 300000,
   });
 
-  const devServer = await startDevServer(projectDir, projectName);
+  let devServer: ChildProcess | undefined;
+  if (!skipDevServer) {
+    devServer = await startDevServer(projectDir, projectName);
+  }
 
   const cleanup = async () => {
     if (devServer) {
