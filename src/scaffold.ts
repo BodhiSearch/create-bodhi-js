@@ -8,7 +8,9 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 function isLocalPath(templateUrl: string): boolean {
-  return templateUrl.startsWith('/') || templateUrl.startsWith('./') || templateUrl.startsWith('../');
+  return (
+    templateUrl.startsWith('/') || templateUrl.startsWith('./') || templateUrl.startsWith('../')
+  );
 }
 
 export interface ScaffoldOptions {

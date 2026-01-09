@@ -35,7 +35,9 @@ export function resolveTemplate(name: string): string {
   throw new Error(
     `Unknown template: ${name}\n\nAvailable templates:\n${Object.keys(TEMPLATES)
       .map(t => `  - ${t}`)
-      .join('\n')}\n\nOr use a custom template: gh:user/repo\nOr use a local path: /path/to/template`
+      .join(
+        '\n'
+      )}\n\nOr use a custom template: gh:user/repo\nOr use a local path: /path/to/template`
   );
 }
 
