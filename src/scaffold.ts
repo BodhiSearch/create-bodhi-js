@@ -7,6 +7,10 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+function isLocalPath(templateUrl: string): boolean {
+  return templateUrl.startsWith('/') || templateUrl.startsWith('./') || templateUrl.startsWith('../');
+}
+
 export interface ScaffoldOptions {
   projectName: string;
   templateUrl: string;
@@ -46,12 +50,18 @@ export async function scaffold(options: ScaffoldOptions) {
     }
   }
 
-  // Download template
-  await downloadTemplate(templateUrl, {
-    dir: targetDir,
-    offline: false,
-    force: true,
-  });
+  // Download or copy template
+  if (isLocalPath(templateUrl)) {
+    // Copy local template directory
+    await fs.cp(templateUrl, targetDir, { recursive: true });
+  } else {
+    // Download from git provider
+    await downloadTemplate(templateUrl, {
+      dir: targetDir,
+      offline: false,
+      force: true,
+    });
+  }
 
   // Move files from template/ subdirectory to root if it exists
   const templateSubdir = path.join(targetDir, 'template');

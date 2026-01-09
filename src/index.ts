@@ -8,7 +8,7 @@ program
   .description('Scaffold Bodhi-powered applications')
   .version('0.1.0')
   .argument('[project-name]', 'Name of the project')
-  .option('-t, --template <name>', 'Template to use (react, svelte, vue)', 'react')
+  .option('-t, --template <name>', 'Template name or local path', 'react')
   .option('--no-install', 'Skip dependency installation')
   .option('--no-git', 'Skip git initialization')
   .option('--github-pages', 'Enable GitHub Pages deployment setup')
