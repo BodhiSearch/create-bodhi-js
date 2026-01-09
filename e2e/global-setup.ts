@@ -9,7 +9,7 @@ async function globalSetup() {
   config({ path: resolve(__dirname, '../.env.test'), override: true, quiet: true });
 
   const requiredEnvVars = ['TEST_DEV_CLIENT_ID', 'TEST_BODHI_USERNAME', 'TEST_BODHI_PASSWORD'];
-  const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
   if (missingVars.length > 0) {
     throw new Error(

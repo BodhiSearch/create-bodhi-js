@@ -1,4 +1,4 @@
-.PHONY: all setup install build clean lint lint-fix typecheck release help
+.PHONY: all setup install build clean lint lint-fix typecheck release help test
 
 all: lint-fix build typecheck ## Default target: lint, build, and typecheck
 
@@ -14,14 +14,18 @@ build: ## Build the CLI package
 clean: ## Clean build artifacts
 	rm -rf dist
 
-lint: ## Run ESLint checks
+check: ## Run ESLint checks
 	npm run lint
 
-lint-fix: ## Fix ESLint and formatting issues
+check.fix: ## Fix ESLint and formatting issues
 	npm run lint:fix
+	$(MAKE) typecheck
 
 typecheck: ## Run TypeScript type checking
 	npm run typecheck
+
+test: ## Run tests
+	npm run test
 
 release: ## Create and push tag for create-bodhi-js release
 	@echo "Preparing to release create-bodhi-js..."

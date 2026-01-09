@@ -98,11 +98,11 @@ async function waitForServer(serverUrl: string): Promise<void> {
         console.log(`Dev server ready at ${serverUrl} (attempt ${attempt}/${maxAttempts})`);
         return;
       }
-    } catch (error) {
+    } catch {
       if (attempt === maxAttempts) {
         throw new Error(`Dev server failed to start within ${maxAttempts * retryDelay}ms`);
       }
-      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
     }
   }
 }
