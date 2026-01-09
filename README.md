@@ -11,8 +11,8 @@ npm create bodhi-js@latest
 # With project name
 npm create bodhi-js@latest my-app
 
-# With options
-npm create bodhi-js@latest my-app -- --template react --github-pages
+# With options (note the -- separator before flags)
+npm create bodhi-js@latest my-app -- --github-pages --github-org "myorg" --dev-client-id "app-id"
 ```
 
 ## Features
@@ -53,6 +53,11 @@ Options:
   --no-install              Skip dependency installation
   --no-git                  Skip git initialization
   --github-pages            Enable GitHub Pages deployment setup
+  --no-github-pages         Disable GitHub Pages deployment setup
+  --github-org <org>        GitHub repository owner (user/org)
+  --dev-client-id <id>      Development client ID (for .env.local and CI)
+  --prod-client-id <id>     Production client ID (for GitHub Pages deploy)
+  --ci                      Run in CI mode (disable animations)
   -h, --help                display help for command
 ```
 
