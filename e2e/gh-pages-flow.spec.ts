@@ -13,7 +13,7 @@ const BODHI_USERNAME = process.env.TEST_BODHI_USERNAME!;
 const BODHI_PASSWORD = process.env.TEST_BODHI_PASSWORD!;
 const TEMPLATE_PATH = path.resolve(__dirname, '../../template-bodhi-react-vite');
 
-test.describe('create-bodhi-js E2E', () => {
+test.describe('gh-pages-flow E2E', () => {
   let scaffold: ScaffoldResult;
 
   test.beforeAll(async () => {
