@@ -92,11 +92,30 @@ export async function scaffoldProject(options: ScaffoldOptions): Promise<Scaffol
   return { tempDir, projectDir, devServer, cleanup, basePath };
 }
 
+async function isPortAvailable(port: number): Promise<boolean> {
+  const net = await import('net');
+  return new Promise(resolve => {
+    const server = net.createServer();
+    server.once('error', () => resolve(false));
+    server.once('listening', () => {
+      server.close();
+      resolve(true);
+    });
+    server.listen(port);
+  });
+}
+
 async function startDevServer(
   projectDir: string,
   projectName: string,
   githubPages: boolean
 ): Promise<ChildProcess> {
+  if (!(await isPortAvailable(5173))) {
+    throw new Error(
+      'Port 5173 is already in use. Cannot start dev server. Ensure no other test process is running.'
+    );
+  }
+
   const devServer = spawn('npm', ['run', 'dev'], {
     cwd: projectDir,
     stdio: 'pipe',
@@ -137,17 +156,12 @@ async function waitForServer(serverUrl: string): Promise<void> {
   }
 }
 
-export async function assertChatFlow(
-  page: Page,
-  baseUrl: string,
-  redirectPattern: RegExp
-): Promise<void> {
-  const { AppPage, KeycloakPage } = await import('./pages/index.js');
+export async function assertChatFlow(page: Page, baseUrl: string): Promise<void> {
+  const { AppPage } = await import('./pages/index.js');
   const BODHI_USERNAME = process.env.TEST_BODHI_USERNAME!;
   const BODHI_PASSWORD = process.env.TEST_BODHI_PASSWORD!;
 
   const app = new AppPage(page);
-  const keycloak = new KeycloakPage(page);
 
   await app.goto(baseUrl);
 
@@ -157,9 +171,7 @@ export async function assertChatFlow(
   await app.connection.expectClientReady();
   await app.connection.expectServerReady();
 
-  await app.auth.clickLogin();
-  await keycloak.fillCredentialsAndSubmit(BODHI_USERNAME, BODHI_PASSWORD);
-  await app.waitForRedirectBack(redirectPattern);
+  await app.auth.loginWithAccessRequest(BODHI_USERNAME, BODHI_PASSWORD);
   await app.auth.expectAuthenticated();
 
   await app.chat.expectModelsLoaded();

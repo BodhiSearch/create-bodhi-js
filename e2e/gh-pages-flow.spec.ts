@@ -35,6 +35,6 @@ test.describe('gh-pages-flow E2E', () => {
   });
 
   test('full authentication and chat flow', async ({ page }) => {
-    await assertChatFlow(page, `http://localhost:5173/${PROJECT_NAME}/`, new RegExp(PROJECT_NAME));
+    await assertChatFlow(page, `http://localhost:5173/${PROJECT_NAME}/`);
   });
 });

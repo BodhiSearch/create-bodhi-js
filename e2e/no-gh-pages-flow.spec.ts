@@ -34,6 +34,6 @@ test.describe('no-github-pages-flow E2E', () => {
   });
 
   test('full authentication and chat flow at root path', async ({ page }) => {
-    await assertChatFlow(page, 'http://localhost:5173/', /localhost:5173\//);
+    await assertChatFlow(page, 'http://localhost:5173/');
   });
 });

@@ -16,7 +16,7 @@ export class SetupModal {
     await this.iframe.getByTestId('lna-url-input').waitFor({ state: 'visible' });
     await this.iframe.getByTestId('lna-url-input').fill(url);
     await this.iframe.getByTestId('lna-connect-button').click();
-    await this.iframe.getByTestId('continue-button').waitFor({ state: 'visible' });
+    await this.iframe.getByTestId('continue-button').waitFor({ state: 'visible', timeout: 15000 });
     await this.iframe.getByTestId('continue-button').click();
   }
 }

@@ -33,8 +33,4 @@ export class AppPage extends BasePage {
     await modal.waitForReady();
     return modal;
   }
-
-  async waitForRedirectBack(urlPattern: RegExp): Promise<void> {
-    await this.page.waitForURL(urlPattern, { timeout: 30000 });
-  }
 }
