@@ -143,10 +143,10 @@ test.describe('Template Processing', () => {
 
       assertNoRawHandlebars(content, 'Header.tsx');
 
-      expect(content).toContain(`url: '${MCP_URL_1}'`);
-      expect(content).toContain(`url: '${MCP_URL_2}'`);
-      expect(content).toContain("userRole: 'scope_user_user'");
-      expect(content).toContain('mcp_servers:');
+      expect(content).toContain(`.addMcpServer('${MCP_URL_1}')`);
+      expect(content).toContain(`.addMcpServer('${MCP_URL_2}')`);
+      expect(content).toContain(".setRole('scope_user_user')");
+      expect(content).toContain('LoginOptionsBuilder');
     });
   });
 
@@ -167,14 +167,15 @@ test.describe('Template Processing', () => {
       await scaffold.cleanup();
     });
 
-    test('Header.tsx should have empty mcp_servers array', () => {
+    test('Header.tsx should have no addMcpServer calls', () => {
       const headerPath = path.join(scaffold.projectDir, 'src/components/Header.tsx');
       const content = fs.readFileSync(headerPath, 'utf-8');
 
       assertNoRawHandlebars(content, 'Header.tsx');
 
-      expect(content).toContain('mcp_servers: []');
-      expect(content).toContain("userRole: 'scope_user_user'");
+      expect(content).not.toContain('.addMcpServer(');
+      expect(content).toContain(".setRole('scope_user_user')");
+      expect(content).toContain('LoginOptionsBuilder');
       // Should not contain any MCP URLs
       expect(content).not.toContain('mcp.exa.ai');
     });

@@ -1,4 +1,4 @@
-import { useBodhi } from '@bodhiapp/bodhi-js-react';
+import { useBodhi, LoginOptionsBuilder } from '@bodhiapp/bodhi-js-react';
 import { Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import StatusIndicator from './StatusIndicator';
@@ -21,13 +21,11 @@ export default function Header() {
   } = useBodhi();
 
   const handleLogin = async () => {
-    const authState = await login({
-      flowType: 'redirect',
-      userRole: 'scope_user_user',
-      requested: {
-        mcp_servers: {{{mcpServersLiteral}}},
-      },
-    });
+    const loginOptions = new LoginOptionsBuilder()
+      .setFlowType('redirect')
+      .setRole('scope_user_user'){{{mcpBuilderCalls}}}
+      .build();
+    const authState = await login(loginOptions);
     if (authState?.status === 'error' && authState.error) {
       toast.error(authState.error.message);
     }

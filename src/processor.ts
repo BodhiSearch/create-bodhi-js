@@ -32,12 +32,9 @@ const TEMPLATE_FILES = [
 export async function processTemplates(targetDir: string, vars: TemplateVars) {
   // Pre-format mcp_servers array literal so it's prettier-clean
   const mcpServers = vars.mcpServers ?? [];
-  const mcpServersLiteral =
-    mcpServers.length === 0
-      ? '[]'
-      : '[' + mcpServers.map(url => `{ url: '${url}' }`).join(', ') + ']';
+  const mcpBuilderCalls = mcpServers.map(url => `\n      .addMcpServer('${url}')`).join('');
 
-  const templateVars = { ...vars, mcpServersLiteral };
+  const templateVars = { ...vars, mcpBuilderCalls };
 
   for (const file of TEMPLATE_FILES) {
     const filePath = path.join(targetDir, file);
