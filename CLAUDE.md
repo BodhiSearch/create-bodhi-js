@@ -30,11 +30,11 @@ npm run check:fix         # Lint:fix + typecheck
 npm test
 ```
 
-**Testing the CLI locally:**
+**Testing the CLI locally (uses local template):**
 ```bash
-npm run dev -- my-test-app
+npm run dev -- my-test-app --template ./templates/react
 # Or with options:
-npm run dev -- my-test-app --github-pages --github-org myorg
+npm run dev -- my-test-app --template ./templates/react --github-pages --github-org myorg
 ```
 
 ## Architecture
@@ -93,7 +93,9 @@ When adding new template variables, update both:
 
 ### Template Repository
 
-The React template source: https://github.com/BodhiSearch/template-bodhi-react-vite
+The React template source lives in `templates/react/` in this monorepo. The external repo (https://github.com/BodhiSearch/template-bodhi-react-vite) is a force-push mirror synced automatically during release via the `sync-template` job in publish.yml.
+
+When published to npm, the CLI still fetches from the external GitHub repo via giget at runtime. For local development and E2E tests, use `--template ./templates/react`.
 
 ## Release Process
 
@@ -112,6 +114,7 @@ Workflow:
 4. Creates GitHub release
 5. Verifies on npm
 6. Auto-bumps to next minor -dev (1.2.3 → 1.3.0-dev)
+7. Syncs `templates/react/` to external template repo (force-push mirror)
 
 ## Code Patterns
 
@@ -133,19 +136,20 @@ Via giget - supports: gh:, gitlab:, bitbucket: prefixes for custom templates
 
 ## Adding New Templates
 
-1. Add entry to `TEMPLATES` object in templates.ts:
+1. Create template directory at `templates/<name>/` with:
+   - template.json (metadata)
+   - template/ subdirectory with project files
+   - Handlebars variables in files listed in TEMPLATE_FILES
+   - _gitignore (will be renamed to .gitignore)
+
+2. Add entry to `TEMPLATES` object in templates.ts:
    ```typescript
    svelte: 'gh:BodhiSearch/template-bodhi-svelte-vite',
    ```
 
-2. Create template repository with:
-   - template.json (metadata)
-   - Handlebars variables in files listed in TEMPLATE_FILES
-   - _gitignore (will be renamed to .gitignore)
-
 3. Test locally:
    ```bash
-   npm run dev -- test-project --template svelte
+   npm run dev -- test-project --template ./templates/svelte
    ```
 
 ## Dependencies

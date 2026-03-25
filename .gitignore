@@ -14,3 +14,8 @@ lerna-debug.log*
 # Playwright outputs
 playwright-report
 test-results
+
+# Template artifacts (when developing locally inside template/)
+templates/*/template/node_modules
+templates/*/template/dist
+templates/*/template/package-lock.json

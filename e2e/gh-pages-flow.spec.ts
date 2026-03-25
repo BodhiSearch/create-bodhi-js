@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 const PROJECT_NAME = 'my-test-app';
 const DEV_CLIENT_ID = process.env.TEST_DEV_CLIENT_ID!;
-const TEMPLATE_PATH = path.resolve(__dirname, '../../template-bodhi-react-vite');
+const TEMPLATE_PATH = path.resolve(__dirname, '../templates/react');
 
 test.describe('gh-pages-flow E2E', () => {
   let scaffold: ScaffoldResult;

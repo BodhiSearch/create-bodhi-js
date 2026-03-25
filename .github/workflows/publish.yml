@@ -103,3 +103,21 @@ jobs:
           git add package.json package-lock.json
           git commit -m "chore: bump version to ${{ steps.version.outputs.next_version }} after release"
           git push origin main
+
+  sync-template:
+    needs: [publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Sync templates/react to template-bodhi-react-vite
+        run: |
+          cd templates/react
+          git init
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          git commit -m "sync: mirror from create-bodhi-js ${{ github.ref_name }}"
+          git remote add mirror https://x-access-token:${{ secrets.TEMPLATE_REPO_PAT }}@github.com/BodhiSearch/template-bodhi-react-vite.git
+          git push mirror HEAD:main --force

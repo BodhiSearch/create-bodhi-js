@@ -1,0 +1,67 @@
+{
+  "name": "bodhi-react-vite",
+  "description": "React + TypeScript + Vite + Tailwind CSS + shadcn/ui + bodhi-js-react template",
+  "version": "1.0.0",
+  "author": "BodhiSearch",
+  "variables": {
+    "projectName": {
+      "description": "Project name (kebab-case)",
+      "required": true,
+      "default": "my-app"
+    },
+    "githubOrg": {
+      "description": "GitHub organization or username",
+      "required": false,
+      "default": ""
+    },
+    "githubPages": {
+      "description": "Enable GitHub Pages deployment",
+      "type": "boolean",
+      "required": false,
+      "default": false
+    },
+    "basePath": {
+      "description": "Base path for deployment (e.g., '/' or '/project-name/')",
+      "required": false,
+      "default": "/"
+    },
+    "pathSegmentsToKeep": {
+      "description": "Path segments to keep for GitHub Pages SPA routing (0 for custom domain, 1 for org.github.io/repo)",
+      "type": "number",
+      "required": false,
+      "default": 0
+    }
+  },
+  "files": {
+    "rename": {
+      "_gitignore": ".gitignore",
+      "_editorconfig": ".editorconfig",
+      "_prettierrc": ".prettierrc",
+      "_prettierignore": ".prettierignore"
+    },
+    "template": [
+      "package.json",
+      "vite.config.ts",
+      "index.html",
+      "public/404.html",
+      "README.md",
+      "playwright.config.ts",
+      "src/App.tsx"
+    ],
+    "conditionalDelete": {
+      "githubPages": {
+        "false": [
+          ".github/workflows/deploy-pages.yml",
+          "public/404.html"
+        ]
+      }
+    }
+  },
+  "postInstall": {
+    "instructions": [
+      "Configure environment variables in .env",
+      "Run 'npm install' to install dependencies",
+      "Run 'npm run dev' to start development server"
+    ]
+  }
+}

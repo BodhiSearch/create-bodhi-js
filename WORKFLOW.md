@@ -27,7 +27,7 @@ git diff --cached
 - Note: Linter formatting changes are cosmetic, sync only substantive changes
 
 ### 4. Sync to Template
-- Copy substantive changes from `my-test-app/src/` to `template-bodhi-react-vite/template/src/`
+- Copy substantive changes from `my-test-app/src/` to `templates/react/template/src/`
 - Keep template variables intact (e.g., `{{projectName}}`, `{{githubOrg}}`)
 - Files to watch:
   - `src/App.tsx` (basePath uses `{{projectName}}`)
@@ -53,10 +53,10 @@ npm run check:fix
 git diff --cached
 
 # 4. Sync to template (manual file edits)
-# Edit template-bodhi-react-vite/template/src/* files
+# Edit templates/react/template/src/* files
 
 # 5. Verify template variables intact
-grep -r "{{projectName}}" ../template-bodhi-react-vite/template/
+grep -r "{{projectName}}" templates/react/template/
 ```
 
 ## Rationale

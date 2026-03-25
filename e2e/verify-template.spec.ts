@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const TEMPLATE_PATH = path.resolve(__dirname, '../../template-bodhi-react-vite');
+const TEMPLATE_PATH = path.resolve(__dirname, '../templates/react');
 
 function assertNoRawHandlebars(content: string, filename: string): void {
   expect(content, `${filename} should not contain escaped \\{{`).not.toContain('\\{{');

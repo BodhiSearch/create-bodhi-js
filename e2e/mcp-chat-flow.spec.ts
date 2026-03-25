@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const PROJECT_NAME = 'mcp-test-app';
 const DEV_CLIENT_ID = process.env.TEST_DEV_CLIENT_ID!;
-const TEMPLATE_PATH = path.resolve(__dirname, '../../template-bodhi-react-vite');
+const TEMPLATE_PATH = path.resolve(__dirname, '../templates/react');
 const EXA_MCP_URL = 'https://mcp.exa.ai/mcp';
 
 test.describe('MCP Chat Flow E2E', () => {
