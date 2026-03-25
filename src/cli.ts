@@ -71,7 +71,7 @@ export async function create(projectName: string | undefined, options: CreateOpt
 
   // GitHub Pages setup
   let enableGithubPages = options.githubPages ?? false;
-  if (options.githubPages === undefined) {
+  if (options.githubPages === undefined && !options.ci) {
     const result = await p.confirm({
       message: 'Enable GitHub Pages deployment?',
       initialValue: false,
