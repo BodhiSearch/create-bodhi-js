@@ -7,33 +7,36 @@ export class AuthSection extends BasePage {
   }
 
   async loginWithAccessRequest(username: string, password: string): Promise<void> {
-    // Click login → popup opens with review/auth URL
-    const reviewPopupPromise = this.page.context().waitForEvent('page');
+    // Click login - SDK creates access request then redirects to Bodhi server
     await this.page.getByTestId('btn-auth-login').click();
-    const reviewPopup = await reviewPopupPromise;
-    await reviewPopup.waitForLoadState('load');
 
-    // BodhiApp login page → click Login → Keycloak form
-    await reviewPopup.click('[data-testid="auth-card-action-0"]');
-    await reviewPopup.waitForSelector('#username');
-    await reviewPopup.fill('#username', username);
-    await reviewPopup.fill('#password', password);
-    await reviewPopup.click('#kc-login');
+    // Wait for navigation away from the app
+    await this.page.waitForURL(url => !url.href.includes('localhost:5173'));
 
-    // Wait for review page to load and approve
-    const approveButton = reviewPopup.locator('[data-testid="review-approve-button"]');
+    // BodhiApp redirects to /ui/login/ in fresh browser context (no SSO)
+    // Click "Login" button on Bodhi's login page → redirects to Keycloak
+    await this.page.getByRole('button', { name: 'Login' }).click();
+
+    // Keycloak login form
+    await this.page.waitForSelector('#username');
+    await this.page.fill('#username', username);
+    await this.page.fill('#password', password);
+    await this.page.click('#kc-login');
+
+    // After Keycloak login, redirects back to Bodhi review page
+    const approveButton = this.page.locator('[data-testid="review-approve-button"]');
     await approveButton.waitFor({ state: 'visible' });
     await approveButton.click();
 
-    // SDK polls → approved → completes OAuth
+    // Multiple redirects happen automatically:
+    // app callback → SDK checks access request → triggers OAuth → SSO → callback → app
     await this.expectAuthenticated();
   }
 
   async expectAuthenticated(): Promise<void> {
     await expect(this.page.getByTestId('section-auth')).toHaveAttribute(
       'data-teststate',
-      'authenticated',
-      { timeout: 30000 }
+      'authenticated'
     );
     await expect(this.page.getByTestId('span-auth-name')).toBeVisible();
     await expect(this.page.getByTestId('btn-auth-logout')).toBeVisible();

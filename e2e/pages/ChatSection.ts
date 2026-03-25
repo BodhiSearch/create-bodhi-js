@@ -3,9 +3,7 @@ import { BasePage } from './BasePage.js';
 
 export class ChatSection extends BasePage {
   async expectModelsLoaded(): Promise<void> {
-    await expect(this.page.getByTestId('model-selector')).not.toHaveText('No models loaded', {
-      timeout: 30000,
-    });
+    await expect(this.page.getByTestId('model-selector')).not.toHaveText('No models loaded');
   }
 
   async selectModel(modelName: string): Promise<void> {
@@ -16,7 +14,7 @@ export class ChatSection extends BasePage {
   async sendMessageAndWaitForResponse(message: string): Promise<void> {
     await this.page.getByTestId('chat-input').fill(message);
     await this.page.getByTestId('send-button').click();
-    await expect(this.page.getByTestId('message-user')).toBeVisible({ timeout: 10000 });
+    await expect(this.page.getByTestId('message-user')).toBeVisible();
     await expect(this.page.getByTestId('chat-area')).toHaveAttribute(
       'data-teststate',
       'streaming',

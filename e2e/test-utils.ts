@@ -163,21 +163,29 @@ export async function assertChatFlow(page: Page, baseUrl: string): Promise<void>
 
   const app = new AppPage(page);
 
+  console.log('[e2e] navigating to', baseUrl);
   await app.goto(baseUrl);
+  console.log('[e2e] page loaded, waiting for setup modal...');
 
   const setupModal = await app.waitForSetupModal();
+  console.log('[e2e] setup modal ready, connecting to http://localhost:1135...');
   await setupModal.setupDirectConnection('http://localhost:1135');
+  console.log('[e2e] direct connection established');
 
   await app.connection.expectClientReady();
   await app.connection.expectServerReady();
+  console.log('[e2e] client and server ready, starting login...');
 
   await app.auth.loginWithAccessRequest(BODHI_USERNAME, BODHI_PASSWORD);
   await app.auth.expectAuthenticated();
+  console.log('[e2e] authenticated, loading models...');
 
   await app.chat.expectModelsLoaded();
   await app.chat.selectModel('bartowski/google_gemma-3-1b-it-GGUF:Q4_K_M');
+  console.log('[e2e] model selected, sending message...');
   await app.chat.sendMessageAndWaitForResponse('What day comes after Monday?');
   await app.chat.expectAssistantResponseContains(/tuesday/i);
+  console.log('[e2e] chat flow complete');
 }
 
 export function verifyProjectStructure(
