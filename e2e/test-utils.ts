@@ -23,6 +23,7 @@ export interface ScaffoldOptions {
   githubPages?: boolean;
   template?: string;
   prodClientId?: string;
+  mcpServers?: string;
   noInstall?: boolean;
   skipDevServer?: boolean;
 }
@@ -35,15 +36,13 @@ export async function scaffoldProject(options: ScaffoldOptions): Promise<Scaffol
     githubPages = true,
     template,
     prodClientId,
+    mcpServers,
     noInstall = false,
     skipDevServer = false,
   } = options;
 
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'create-bodhi-js-e2e-'));
   const projectDir = path.join(tempDir, projectName);
-
-  console.log(`Temp directory: ${tempDir}`);
-  console.log(`Project directory: ${projectDir}`);
 
   const cliPath = path.resolve(__dirname, '../src/index.ts');
   const command = [
@@ -61,12 +60,13 @@ export async function scaffoldProject(options: ScaffoldOptions): Promise<Scaffol
     prodClientId ? prodClientId : '',
     template ? '--template' : '',
     template ? template : '',
+    mcpServers ? '--mcp-servers' : '',
+    mcpServers ? mcpServers : '',
     noInstall ? '--no-install' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
-  console.log(`Running: ${command}`);
   execSync(command, {
     cwd: tempDir,
     stdio: 'inherit',
@@ -122,14 +122,6 @@ async function startDevServer(
     shell: true,
   });
 
-  devServer.stdout?.on('data', (data: Buffer) => {
-    console.log(`[dev server] ${data.toString()}`);
-  });
-
-  devServer.stderr?.on('data', (data: Buffer) => {
-    console.error(`[dev server error] ${data.toString()}`);
-  });
-
   const basePath = githubPages ? `/${projectName}/` : '/';
   await waitForServer(`http://localhost:5173${basePath}`);
 
@@ -144,7 +136,6 @@ async function waitForServer(serverUrl: string): Promise<void> {
     try {
       const response = await fetch(serverUrl);
       if (response.ok) {
-        console.log(`Dev server ready at ${serverUrl} (attempt ${attempt}/${maxAttempts})`);
         return;
       }
     } catch {
@@ -163,29 +154,21 @@ export async function assertChatFlow(page: Page, baseUrl: string): Promise<void>
 
   const app = new AppPage(page);
 
-  console.log('[e2e] navigating to', baseUrl);
   await app.goto(baseUrl);
-  console.log('[e2e] page loaded, waiting for setup modal...');
 
   const setupModal = await app.waitForSetupModal();
-  console.log('[e2e] setup modal ready, connecting to http://localhost:1135...');
   await setupModal.setupDirectConnection('http://localhost:1135');
-  console.log('[e2e] direct connection established');
 
   await app.connection.expectClientReady();
   await app.connection.expectServerReady();
-  console.log('[e2e] client and server ready, starting login...');
 
   await app.auth.loginWithAccessRequest(BODHI_USERNAME, BODHI_PASSWORD);
   await app.auth.expectAuthenticated();
-  console.log('[e2e] authenticated, loading models...');
 
   await app.chat.expectModelsLoaded();
   await app.chat.selectModel('bartowski/google_gemma-3-1b-it-GGUF:Q4_K_M');
-  console.log('[e2e] model selected, sending message...');
   await app.chat.sendMessageAndWaitForResponse('What day comes after Monday?');
   await app.chat.expectAssistantResponseContains(/tuesday/i);
-  console.log('[e2e] chat flow complete');
 }
 
 export function verifyProjectStructure(

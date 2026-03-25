@@ -16,6 +16,10 @@ function assertNoRawHandlebars(content: string, filename: string): void {
     '{{else}}'
   );
   expect(content, `${filename} should not contain raw Handlebars {{/if}}`).not.toContain('{{/if}}');
+  expect(content, `${filename} should not contain raw Handlebars {{#each`).not.toContain('{{#each');
+  expect(content, `${filename} should not contain raw Handlebars {{/each}}`).not.toContain(
+    '{{/each}}'
+  );
 }
 
 test.describe('Template Processing', () => {
@@ -110,6 +114,69 @@ test.describe('Template Processing', () => {
         "ref: ${{ github.event.inputs.ref || github.event.client_payload.sha || 'main' }}"
       );
       expect(content).toContain('url: ${{ steps.deployment.outputs.page_url }}');
+    });
+  });
+
+  test.describe('with MCP servers', () => {
+    let scaffold: ScaffoldResult;
+    const MCP_URL_1 = 'https://mcp.exa.ai/mcp';
+    const MCP_URL_2 = 'https://mcp.deepwiki.com/mcp';
+
+    test.beforeAll(async () => {
+      scaffold = await scaffoldProject({
+        projectName: 'test-with-mcps',
+        template: TEMPLATE_PATH,
+        mcpServers: `${MCP_URL_1},${MCP_URL_2}`,
+        noInstall: true,
+        skipDevServer: true,
+        githubPages: false,
+      });
+    });
+
+    test.afterAll(async () => {
+      await scaffold.cleanup();
+    });
+
+    test('Header.tsx should contain MCP server URLs in login call', () => {
+      const headerPath = path.join(scaffold.projectDir, 'src/components/Header.tsx');
+      const content = fs.readFileSync(headerPath, 'utf-8');
+
+      assertNoRawHandlebars(content, 'Header.tsx');
+
+      expect(content).toContain(`url: '${MCP_URL_1}'`);
+      expect(content).toContain(`url: '${MCP_URL_2}'`);
+      expect(content).toContain("userRole: 'scope_user_user'");
+      expect(content).toContain('mcp_servers:');
+    });
+  });
+
+  test.describe('without MCP servers', () => {
+    let scaffold: ScaffoldResult;
+
+    test.beforeAll(async () => {
+      scaffold = await scaffoldProject({
+        projectName: 'test-no-mcps',
+        template: TEMPLATE_PATH,
+        noInstall: true,
+        skipDevServer: true,
+        githubPages: false,
+      });
+    });
+
+    test.afterAll(async () => {
+      await scaffold.cleanup();
+    });
+
+    test('Header.tsx should have empty mcp_servers array', () => {
+      const headerPath = path.join(scaffold.projectDir, 'src/components/Header.tsx');
+      const content = fs.readFileSync(headerPath, 'utf-8');
+
+      assertNoRawHandlebars(content, 'Header.tsx');
+
+      expect(content).toContain('mcp_servers: []');
+      expect(content).toContain("userRole: 'scope_user_user'");
+      // Should not contain any MCP URLs
+      expect(content).not.toContain('mcp.exa.ai');
     });
   });
 });

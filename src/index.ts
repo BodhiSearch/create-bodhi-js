@@ -16,6 +16,7 @@ program
   .option('--github-org <org>', 'GitHub repository owner (user/org)')
   .option('--dev-client-id <id>', 'Development client ID (for .env.local and CI)')
   .option('--prod-client-id <id>', 'Production client ID (for GitHub Pages deploy)')
+  .option('--mcp-servers <urls>', 'Comma-separated MCP server URLs to request access to')
   .option('--ci', 'Run in CI mode (disable animations)')
   .action(async (projectName, options) => {
     await create(projectName, options);

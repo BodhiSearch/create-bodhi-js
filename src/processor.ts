@@ -10,6 +10,7 @@ interface TemplateVars {
   pathSegmentsToKeep: number;
   devClientId?: string;
   prodClientId?: string;
+  mcpServers?: string[];
 }
 
 const TEMPLATE_FILES = [
@@ -21,6 +22,7 @@ const TEMPLATE_FILES = [
   'playwright.config.ts',
   'CONTRIBUTING.md',
   'src/App.tsx',
+  'src/components/Header.tsx',
   '.github/SECURITY.md',
   '.github/ISSUE_TEMPLATE/config.yml',
   '.github/workflows/ci.yml',
@@ -28,6 +30,15 @@ const TEMPLATE_FILES = [
 ];
 
 export async function processTemplates(targetDir: string, vars: TemplateVars) {
+  // Pre-format mcp_servers array literal so it's prettier-clean
+  const mcpServers = vars.mcpServers ?? [];
+  const mcpServersLiteral =
+    mcpServers.length === 0
+      ? '[]'
+      : '[' + mcpServers.map(url => `{ url: '${url}' }`).join(', ') + ']';
+
+  const templateVars = { ...vars, mcpServersLiteral };
+
   for (const file of TEMPLATE_FILES) {
     const filePath = path.join(targetDir, file);
 
@@ -37,7 +48,7 @@ export async function processTemplates(targetDir: string, vars: TemplateVars) {
 
       // Compile and render template
       const template = Handlebars.compile(content);
-      const rendered = template(vars);
+      const rendered = template(templateVars);
 
       // Write back
       await fs.writeFile(filePath, rendered, 'utf-8');

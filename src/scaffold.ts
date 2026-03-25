@@ -24,6 +24,7 @@ export interface ScaffoldOptions {
   git: boolean;
   devClientId?: string;
   prodClientId?: string;
+  mcpServers?: string[];
 }
 
 export async function scaffold(options: ScaffoldOptions) {
@@ -38,6 +39,7 @@ export async function scaffold(options: ScaffoldOptions) {
     git,
     devClientId,
     prodClientId,
+    mcpServers,
   } = options;
 
   const targetDir = path.resolve(process.cwd(), projectName);
@@ -100,6 +102,7 @@ export async function scaffold(options: ScaffoldOptions) {
     pathSegmentsToKeep,
     devClientId,
     prodClientId,
+    mcpServers,
   });
 
   // Conditional file deletion

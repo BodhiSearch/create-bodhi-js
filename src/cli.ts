@@ -3,6 +3,8 @@ import pc from 'picocolors';
 import { scaffold } from './scaffold.js';
 import { resolveTemplate } from './templates.js';
 
+const POPULAR_MCP_SERVERS = ['https://mcp.exa.ai/mcp', 'https://mcp.deepwiki.com/mcp'];
+
 export interface CreateOptions {
   template: string;
   install: boolean;
@@ -11,6 +13,7 @@ export interface CreateOptions {
   githubOrg?: string;
   devClientId?: string;
   prodClientId?: string;
+  mcpServers?: string;
   ci?: boolean;
 }
 
@@ -110,6 +113,51 @@ export async function create(projectName: string | undefined, options: CreateOpt
     githubOrg = 'YOUR_ORG';
   }
 
+  // MCP servers setup
+  let mcpServers: string[] = [];
+
+  if (options.mcpServers) {
+    // From CLI flag
+    mcpServers = options.mcpServers
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+  } else if (!options.ci) {
+    // Step 1: Multi-select from popular presets
+    const presetResult = await p.multiselect({
+      message: 'Select MCP servers to request access to:',
+      options: POPULAR_MCP_SERVERS.map(url => ({ value: url, label: url })),
+      required: false,
+    });
+
+    if (p.isCancel(presetResult)) {
+      p.cancel('Operation cancelled');
+      process.exit(0);
+    }
+
+    mcpServers = presetResult as string[];
+
+    // Step 2: Free-form custom URLs
+    const customResult = await p.text({
+      message: 'Additional MCP server URLs (comma-separated, blank to skip):',
+      placeholder: 'https://mcp.example.com/mcp',
+      defaultValue: '',
+    });
+
+    if (p.isCancel(customResult)) {
+      p.cancel('Operation cancelled');
+      process.exit(0);
+    }
+
+    if (customResult) {
+      const customUrls = (customResult as string)
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      mcpServers = [...mcpServers, ...customUrls];
+    }
+  }
+
   // Scaffold project
   const spinner = p.spinner();
   spinner.start('Scaffolding project...');
@@ -126,6 +174,7 @@ export async function create(projectName: string | undefined, options: CreateOpt
       git: options.git,
       devClientId: options.devClientId,
       prodClientId: options.prodClientId,
+      mcpServers,
     });
 
     spinner.stop('Project scaffolded successfully!');
