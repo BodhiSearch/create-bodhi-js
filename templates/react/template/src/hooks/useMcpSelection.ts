@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import type { Mcp } from '@/lib/mcp-tools';
-import { isMcpAvailable, getVisibleTools } from '@/lib/mcp-tools';
+import type { Mcp, McpTool } from '@/lib/mcp-tools';
+import { isMcpAvailable } from '@/lib/mcp-tools';
 
 const STORAGE_KEY = 'bodhi-mcp-selection';
 
@@ -23,7 +23,7 @@ function saveSelection(selection: EnabledMcpTools) {
   }
 }
 
-export function useMcpSelection(mcps: Mcp[]) {
+export function useMcpSelection(mcps: Mcp[], toolsByMcpId: Record<string, McpTool[]>) {
   const [rawEnabledMcpTools, setEnabledMcpTools] = useState<EnabledMcpTools>(loadSelection);
 
   // Derive filtered selection, removing unavailable MCPs
@@ -76,14 +76,14 @@ export function useMcpSelection(mcps: Mcp[]) {
   }, [enabledMcpTools]);
 
   const getCheckboxState = useCallback(
-    (mcpId: string, mcp: Mcp): 'checked' | 'unchecked' | 'indeterminate' => {
+    (mcpId: string): 'checked' | 'unchecked' | 'indeterminate' => {
       const enabledCount = enabledMcpTools[mcpId]?.length || 0;
       if (enabledCount === 0) return 'unchecked';
-      const totalTools = getVisibleTools(mcp).length;
+      const totalTools = toolsByMcpId[mcpId]?.length ?? 0;
       if (enabledCount >= totalTools) return 'checked';
       return 'indeterminate';
     },
-    [enabledMcpTools]
+    [enabledMcpTools, toolsByMcpId]
   );
 
   return {

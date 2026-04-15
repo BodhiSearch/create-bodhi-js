@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { type Mcp, isMcpAvailable, getUnavailableReason, getVisibleTools } from '@/lib/mcp-tools';
+import { type Mcp, type McpTool, isMcpAvailable, getUnavailableReason } from '@/lib/mcp-tools';
 
 interface McpItemProps {
   mcp: Mcp;
+  tools: McpTool[];
   isExpanded: boolean;
   onToggleExpand: () => void;
   enabledTools: string[];
@@ -18,6 +19,7 @@ interface McpItemProps {
 
 function McpItem({
   mcp,
+  tools,
   isExpanded,
   onToggleExpand,
   enabledTools,
@@ -27,7 +29,7 @@ function McpItem({
 }: McpItemProps) {
   const isAvailable = isMcpAvailable(mcp);
   const unavailableReason = getUnavailableReason(mcp);
-  const visibleTools = getVisibleTools(mcp);
+  const visibleTools = tools;
   const enabledCount = enabledTools.length;
 
   const content = (
@@ -111,16 +113,18 @@ function McpItem({
 
 interface McpPopoverProps {
   mcps: Mcp[];
+  toolsByMcpId: Record<string, McpTool[]>;
   enabledMcpTools: Record<string, string[]>;
   onToggleMcp: (mcpId: string, allToolNames: string[]) => void;
   onToggleTool: (mcpId: string, toolName: string) => void;
-  getCheckboxState: (mcpId: string, mcp: Mcp) => 'checked' | 'unchecked' | 'indeterminate';
+  getCheckboxState: (mcpId: string) => 'checked' | 'unchecked' | 'indeterminate';
   enabledToolCount: number;
   isLoading: boolean;
 }
 
 export default function McpPopover({
   mcps,
+  toolsByMcpId,
   enabledMcpTools,
   onToggleMcp,
   onToggleTool,
@@ -181,10 +185,11 @@ export default function McpPopover({
               <McpItem
                 key={mcp.id}
                 mcp={mcp}
+                tools={toolsByMcpId[mcp.id] ?? []}
                 isExpanded={expandedMcps.has(mcp.id)}
                 onToggleExpand={() => toggleExpand(mcp.id)}
                 enabledTools={enabledMcpTools[mcp.id] ?? []}
-                checkboxState={getCheckboxState(mcp.id, mcp)}
+                checkboxState={getCheckboxState(mcp.id)}
                 onToggleMcp={onToggleMcp}
                 onToggleTool={onToggleTool}
               />

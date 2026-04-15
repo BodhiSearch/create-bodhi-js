@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import McpPopover from './McpPopover';
-import type { Mcp } from '@/lib/mcp-tools';
+import type { Mcp, McpTool } from '@/lib/mcp-tools';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => Promise<void>;
@@ -22,10 +22,11 @@ interface ChatInputProps {
   isLoadingModels: boolean;
   onRefreshModels: () => void;
   mcps: Mcp[];
+  toolsByMcpId: Record<string, McpTool[]>;
   enabledMcpTools: Record<string, string[]>;
   onToggleMcp: (mcpId: string, allToolNames: string[]) => void;
   onToggleTool: (mcpId: string, toolName: string) => void;
-  getCheckboxState: (mcpId: string, mcp: Mcp) => 'checked' | 'unchecked' | 'indeterminate';
+  getCheckboxState: (mcpId: string) => 'checked' | 'unchecked' | 'indeterminate';
   enabledToolCount: number;
   isMcpsLoading: boolean;
 }
@@ -39,6 +40,7 @@ export default function ChatInput({
   isLoadingModels,
   onRefreshModels,
   mcps,
+  toolsByMcpId,
   enabledMcpTools,
   onToggleMcp,
   onToggleTool,
@@ -97,6 +99,7 @@ export default function ChatInput({
           <div className="col-start-2 flex items-center gap-2 justify-end">
             <McpPopover
               mcps={mcps}
+              toolsByMcpId={toolsByMcpId}
               enabledMcpTools={enabledMcpTools}
               onToggleMcp={onToggleMcp}
               onToggleTool={onToggleTool}

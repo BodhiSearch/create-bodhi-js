@@ -7,9 +7,9 @@ import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 
 export default function ChatDemo() {
-  const { mcps, isLoading: isMcpsLoading } = useMcpList();
+  const { mcps, toolsByMcpId, isLoading: isMcpsLoading } = useMcpList();
   const { enabledMcpTools, toggleTool, toggleMcp, getEnabledToolCount, getCheckboxState } =
-    useMcpSelection(mcps);
+    useMcpSelection(mcps, toolsByMcpId);
 
   const {
     messages,
@@ -23,7 +23,7 @@ export default function ChatDemo() {
     models,
     isLoadingModels,
     loadModels,
-  } = useChat(enabledMcpTools, mcps);
+  } = useChat(enabledMcpTools, mcps, toolsByMcpId);
 
   useEffect(() => {
     if (chatError) {
@@ -46,6 +46,7 @@ export default function ChatDemo() {
         isLoadingModels={isLoadingModels}
         onRefreshModels={loadModels}
         mcps={mcps}
+        toolsByMcpId={toolsByMcpId}
         enabledMcpTools={enabledMcpTools}
         onToggleMcp={toggleMcp}
         onToggleTool={toggleTool}

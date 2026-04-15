@@ -1,10 +1,18 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useBodhi } from '@bodhiapp/bodhi-js-react';
+import { createMcpClient } from '@bodhiapp/bodhi-js-react/mcp';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { getErrorMessage } from '@/lib/utils';
-import { buildMcpToolsArray, decodeMcpToolName, type Mcp } from '@/lib/mcp-tools';
+import { buildMcpToolsArray, decodeMcpToolName, type Mcp, type McpTool } from '@/lib/mcp-tools';
 import type { ChatMessage, ToolCall } from '@/types/chat';
 
-export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) {
+const MAX_AGENT_ITERATIONS = 25;
+
+export function useChat(
+  enabledMcpTools: Record<string, string[]>,
+  mcps: Mcp[],
+  toolsByMcpId: Record<string, McpTool[]>
+) {
   const { client, isAuthenticated, isReady } = useBodhi();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -15,9 +23,9 @@ export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isLoadingModelsRef = useRef(false);
 
-  const mcpSlugToId = useMemo(() => {
-    const map = new Map<string, string>();
-    mcps.forEach(m => map.set(m.slug, m.id));
+  const mcpBySlug = useMemo(() => {
+    const map = new Map<string, Mcp>();
+    mcps.forEach(m => map.set(m.slug, m));
     return map;
   }, [mcps]);
 
@@ -74,7 +82,11 @@ export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) 
   }, [isAuthenticated]);
 
   const executeToolCalls = useCallback(
-    async (toolCalls: ToolCall[], signal: AbortSignal): Promise<ChatMessage[]> => {
+    async (
+      toolCalls: ToolCall[],
+      mcpClientsBySlug: Map<string, Client>,
+      signal: AbortSignal
+    ): Promise<ChatMessage[]> => {
       const results = await Promise.allSettled(
         toolCalls.map(async tc => {
           const decoded = decodeMcpToolName(tc.function.name);
@@ -88,8 +100,8 @@ export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) 
             };
           }
 
-          const mcpId = mcpSlugToId.get(decoded.mcpSlug);
-          if (!mcpId) {
+          const mcp = mcpBySlug.get(decoded.mcpSlug);
+          if (!mcp) {
             return {
               role: 'tool' as const,
               content: JSON.stringify({
@@ -114,10 +126,18 @@ export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) 
             } catch {
               // Use empty args if parse fails
             }
-            const result = await client.mcps.executeTool(mcpId, decoded.toolName, args);
+            let mcpClient = mcpClientsBySlug.get(decoded.mcpSlug);
+            if (!mcpClient) {
+              mcpClient = await createMcpClient(client, mcp.path);
+              mcpClientsBySlug.set(decoded.mcpSlug, mcpClient);
+            }
+            const result = await mcpClient.callTool({
+              name: decoded.toolName,
+              arguments: args,
+            });
             return {
               role: 'tool' as const,
-              content: typeof result === 'string' ? result : JSON.stringify(result),
+              content: JSON.stringify(result.content),
               tool_call_id: tc.id,
             };
           } catch (err) {
@@ -142,7 +162,7 @@ export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) 
             }
       );
     },
-    [client, mcpSlugToId]
+    [client, mcpBySlug]
   );
 
   const sendMessage = useCallback(
@@ -162,12 +182,15 @@ export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) 
 
       setMessages(prev => [...prev, { role: 'user', content: prompt }]);
 
+      const mcpClientsBySlug = new Map<string, Client>();
       try {
-        const tools = buildMcpToolsArray(enabledMcpTools, mcps);
+        const tools = buildMcpToolsArray(enabledMcpTools, mcps, toolsByMcpId);
         const currentMessages = [...conversationMessages];
         let continueLoop = true;
+        let iterations = 0;
 
-        while (continueLoop) {
+        while (continueLoop && iterations < MAX_AGENT_ITERATIONS) {
+          iterations++;
           if (abortController.signal.aborted) break;
 
           // Add empty assistant message for streaming
@@ -261,7 +284,11 @@ export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) 
             currentMessages.push(assistantMsg);
 
             // Execute tool calls
-            const toolResults = await executeToolCalls(toolCalls, abortController.signal);
+            const toolResults = await executeToolCalls(
+              toolCalls,
+              mcpClientsBySlug,
+              abortController.signal
+            );
 
             // Add tool results to messages
             setMessages(prev => [...prev, ...toolResults]);
@@ -281,11 +308,14 @@ export function useChat(enabledMcpTools: Record<string, string[]>, mcps: Mcp[]) 
         setError(getErrorMessage(err, 'Failed to send message'));
         setMessages(prev => prev.slice(0, -1));
       } finally {
+        await Promise.all(
+          Array.from(mcpClientsBySlug.values()).map(c => c.close().catch(() => {}))
+        );
         setIsStreaming(false);
         abortControllerRef.current = null;
       }
     },
-    [client, selectedModel, messages, enabledMcpTools, mcps, executeToolCalls]
+    [client, selectedModel, messages, enabledMcpTools, mcps, toolsByMcpId, executeToolCalls]
   );
 
   const clearMessages = useCallback(() => {

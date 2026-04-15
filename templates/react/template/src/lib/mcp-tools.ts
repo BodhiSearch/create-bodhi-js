@@ -35,46 +35,32 @@ export interface Mcp {
   slug: string;
   name: string;
   enabled: boolean;
+  path: string;
   mcp_server: {
     enabled: boolean;
   };
-  tools_cache?: McpTool[] | null;
-  tools_filter?: string[] | null;
 }
 
 export interface McpTool {
   name: string;
   description?: string;
-  input_schema?: Record<string, unknown>;
+  inputSchema?: Record<string, unknown>;
 }
 
 export function isMcpAvailable(mcp: Mcp): boolean {
-  return (
-    mcp.mcp_server.enabled &&
-    mcp.enabled &&
-    mcp.tools_cache != null &&
-    mcp.tools_cache.length > 0 &&
-    (mcp.tools_filter == null || mcp.tools_filter.length > 0)
-  );
+  return mcp.mcp_server.enabled && mcp.enabled;
 }
 
 export function getUnavailableReason(mcp: Mcp): string | null {
   if (!mcp.mcp_server.enabled) return 'Disabled by administrator';
   if (!mcp.enabled) return 'Disabled by user';
-  if (!mcp.tools_cache || mcp.tools_cache.length === 0) return 'Tools not yet discovered';
-  if (mcp.tools_filter && mcp.tools_filter.length === 0) return 'All tools blocked by filter';
   return null;
-}
-
-export function getVisibleTools(mcp: Mcp): McpTool[] {
-  if (!mcp.tools_cache) return [];
-  if (mcp.tools_filter == null) return mcp.tools_cache;
-  return mcp.tools_cache.filter(t => mcp.tools_filter!.includes(t.name));
 }
 
 export function buildMcpToolsArray(
   enabledMcpTools: Record<string, string[]>,
-  mcps: Mcp[]
+  mcps: Mcp[],
+  toolsByMcpId: Record<string, McpTool[]>
 ): McpToolDefinition[] {
   const result: McpToolDefinition[] = [];
 
@@ -83,15 +69,15 @@ export function buildMcpToolsArray(
     if (!enabledToolNames || enabledToolNames.length === 0) continue;
     if (!isMcpAvailable(mcp)) continue;
 
-    const visibleTools = getVisibleTools(mcp);
-    for (const tool of visibleTools) {
+    const tools = toolsByMcpId[mcp.id] ?? [];
+    for (const tool of tools) {
       if (enabledToolNames.includes(tool.name)) {
         result.push({
           type: 'function',
           function: {
             name: encodeMcpToolName(mcp.slug, tool.name),
             description: tool.description ?? '',
-            parameters: tool.input_schema ?? {},
+            parameters: tool.inputSchema ?? {},
           },
         });
       }
