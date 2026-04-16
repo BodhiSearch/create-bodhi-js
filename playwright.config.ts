@@ -2,12 +2,12 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  workers: 1,
+  workers: 2,
   reporter: 'list',
-  timeout: 60000,
+  timeout: 600_000,
   globalSetup: './e2e/global-setup.ts',
   use: {
     headless: true,

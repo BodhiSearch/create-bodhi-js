@@ -56,8 +56,14 @@ export async function scaffold(options: ScaffoldOptions) {
 
   // Download or copy template
   if (isLocalPath(templateUrl)) {
-    // Copy local template directory
-    await fs.cp(templateUrl, targetDir, { recursive: true });
+    // Copy local template directory, skipping in-template build artifacts
+    // (node_modules/.bin symlinks would otherwise point back at the template
+    // and cause "two different versions of @playwright/test" errors).
+    const SKIP = new Set(['node_modules', 'dist', 'package-lock.json', 'test-results']);
+    await fs.cp(templateUrl, targetDir, {
+      recursive: true,
+      filter: src => !SKIP.has(path.basename(src)),
+    });
   } else {
     // Download from git provider
     await downloadTemplate(templateUrl, {
