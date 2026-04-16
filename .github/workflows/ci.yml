@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  template-e2e:
+    runs-on: ubuntu-latest
+    env:
+      VITE_BODHI_APP_CLIENT_ID: ${{ vars.VITE_BODHI_APP_CLIENT_ID }}
+      VITE_BODHI_AUTH_SERVER_URL: ${{ vars.VITE_BODHI_AUTH_SERVER_URL }}
+      BODHIAPP_CLIENT_ID: ${{ vars.BODHIAPP_CLIENT_ID }}
+      BODHIAPP_CLIENT_SECRET: ${{ secrets.BODHIAPP_CLIENT_SECRET }}
+      BODHIAPP_USERNAME: ${{ vars.BODHIAPP_USERNAME }}
+      BODHIAPP_USERID: ${{ vars.BODHIAPP_USERID }}
+      BODHIAPP_PASSWORD: ${{ secrets.BODHIAPP_PASSWORD }}
+      BODHIAPP_AUTH_URL: ${{ vars.BODHIAPP_AUTH_URL }}
+      BODHIAPP_AUTH_REALM: ${{ vars.BODHIAPP_AUTH_REALM }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install CLI deps
+        run: npm ci
+
+      - name: Lint CLI
+        run: npm run lint
+
+      - name: Typecheck CLI
+        run: npm run typecheck
+
+      - name: Build CLI
+        run: npm run build
+
+      - name: Scaffold test app
+        working-directory: ${{ runner.temp }}
+        run: |
+          node "$GITHUB_WORKSPACE/dist/index.js" test-app \
+            --template "$GITHUB_WORKSPACE/templates/react" \
+            --ci --no-install --no-git --no-github-pages \
+            --mcp-servers "https://mcp.exa.ai/mcp" \
+            --dev-client-id "$VITE_BODHI_APP_CLIENT_ID"
+
+      - name: Install scaffolded app deps
+        working-directory: ${{ runner.temp }}/test-app
+        run: npm install
+
+      - name: Write e2e .env.test
+        working-directory: ${{ runner.temp }}/test-app
+        run: |
+          cat > e2e/.env.test <<EOF
+          BODHIAPP_CLIENT_ID=$BODHIAPP_CLIENT_ID
+          BODHIAPP_CLIENT_SECRET=$BODHIAPP_CLIENT_SECRET
+          BODHIAPP_USERNAME=$BODHIAPP_USERNAME
+          BODHIAPP_USERID=$BODHIAPP_USERID
+          BODHIAPP_PASSWORD=$BODHIAPP_PASSWORD
+          BODHIAPP_AUTH_URL=$BODHIAPP_AUTH_URL
+          BODHIAPP_AUTH_REALM=$BODHIAPP_AUTH_REALM
+          OPENAI_API_KEY=$OPENAI_API_KEY
+          EOF
+
+      - name: Lint scaffolded app
+        working-directory: ${{ runner.temp }}/test-app
+        run: npm run lint
+
+      - name: Typecheck scaffolded app
+        working-directory: ${{ runner.temp }}/test-app
+        run: npm run typecheck
+
+      - name: Build scaffolded app
+        working-directory: ${{ runner.temp }}/test-app
+        run: npm run build
+
+      - name: Unit tests (scaffolded app)
+        working-directory: ${{ runner.temp }}/test-app
+        run: npm test
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.57.0
+
+      - name: Install Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ runner.temp }}/test-app
+        run: npx playwright install chromium
+
+      - name: E2E tests (scaffolded app)
+        working-directory: ${{ runner.temp }}/test-app
+        run: npm run ci:test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: ${{ runner.temp }}/test-app/playwright-report
+          retention-days: 7

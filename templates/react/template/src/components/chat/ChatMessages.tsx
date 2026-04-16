@@ -1,20 +1,31 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { ToolResultMessage } from '@mariozechner/pi-ai';
 import MessageBubble from './MessageBubble';
 import ToolCallMessage from './ToolCallMessage';
-import type { ChatMessage } from '@/types/chat';
+import { extractTextFromAgentMessage, getToolCalls, type AgentMessage } from '@/types/chat';
 
 interface ChatMessagesProps {
-  messages: ChatMessage[];
+  messages: AgentMessage[];
+  streamingMessage?: AgentMessage;
   isStreaming: boolean;
   error?: string | null;
 }
 
-export default function ChatMessages({ messages, isStreaming, error }: ChatMessagesProps) {
+export default function ChatMessages({
+  messages,
+  streamingMessage,
+  isStreaming,
+  error,
+}: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const isUserScrolledUpRef = useRef(false);
   const prevMessagesLengthRef = useRef(0);
+
+  const renderList = useMemo<AgentMessage[]>(() => {
+    return streamingMessage ? [...messages, streamingMessage] : messages;
+  }, [messages, streamingMessage]);
 
   useEffect(() => {
     const viewport = scrollViewportRef.current;
@@ -31,16 +42,16 @@ export default function ChatMessages({ messages, isStreaming, error }: ChatMessa
   }, []);
 
   useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
+    const lastMessage = renderList[renderList.length - 1];
     const isNewUserMessage =
-      messages.length > prevMessagesLengthRef.current && lastMessage?.role === 'user';
+      renderList.length > prevMessagesLengthRef.current && lastMessage?.role === 'user';
 
     if (isNewUserMessage) {
       isUserScrolledUpRef.current = false;
     }
 
-    prevMessagesLengthRef.current = messages.length;
-  }, [messages]);
+    prevMessagesLengthRef.current = renderList.length;
+  }, [renderList]);
 
   useEffect(() => {
     if (!isUserScrolledUpRef.current) {
@@ -48,18 +59,32 @@ export default function ChatMessages({ messages, isStreaming, error }: ChatMessa
         behavior: isStreaming ? 'instant' : 'smooth',
       });
     }
-  }, [messages, isStreaming]);
+  }, [renderList, isStreaming]);
 
-  // Build a map of tool_call_id → tool result message
   const toolResults = useMemo(() => {
-    const map = new Map<string, ChatMessage>();
-    for (const msg of messages) {
-      if (msg.role === 'tool' && msg.tool_call_id) {
-        map.set(msg.tool_call_id, msg);
+    const map = new Map<string, ToolResultMessage>();
+    for (const msg of renderList) {
+      if (msg.role === 'toolResult') {
+        map.set(msg.toolCallId, msg as ToolResultMessage);
       }
     }
     return map;
-  }, [messages]);
+  }, [renderList]);
+
+  const turnByIndex = useMemo(() => {
+    const turns: number[] = [];
+    let userCount = 0;
+    for (const msg of renderList) {
+      if (msg.role === 'user') userCount++;
+      turns.push(Math.max(0, userCount - 1));
+    }
+    return turns;
+  }, [renderList]);
+
+  const lastMsg = renderList[renderList.length - 1];
+  const showPending =
+    isStreaming &&
+    (!lastMsg || lastMsg.role !== 'assistant' || !extractTextFromAgentMessage(lastMsg));
 
   return (
     <ScrollArea
@@ -79,25 +104,27 @@ export default function ChatMessages({ messages, isStreaming, error }: ChatMessa
     >
       <div className="p-4 bg-gray-50">
         <div className="max-w-4xl mx-auto">
-          {messages.length === 0 ? (
+          {renderList.length === 0 ? (
             <p className="text-center text-gray-400 mt-8">No messages yet. Start a conversation!</p>
           ) : (
             <>
-              {messages.map((msg, index) => {
-                if (msg.role === 'tool') return null; // Rendered inline with tool calls
+              {renderList.map((msg, index) => {
+                if (msg.role === 'toolResult') return null;
+                const turn = turnByIndex[index];
 
-                if (msg.role === 'assistant' && msg.tool_calls?.length) {
+                if (msg.role === 'assistant' && getToolCalls(msg).length > 0) {
+                  const hasText = !!extractTextFromAgentMessage(msg);
                   return (
                     <div key={index}>
-                      {msg.content && <MessageBubble message={msg} />}
+                      {hasText && <MessageBubble message={msg} turn={turn} />}
                       <ToolCallMessage message={msg} toolResults={toolResults} />
                     </div>
                   );
                 }
 
-                return <MessageBubble key={index} message={msg} />;
+                return <MessageBubble key={index} message={msg} turn={turn} />;
               })}
-              {isStreaming && !messages[messages.length - 1]?.content && (
+              {showPending && (
                 <div data-testid="streaming-indicator" className="flex justify-start mb-4">
                   <div className="bg-gray-200 px-4 py-2 rounded-lg">
                     <div className="flex items-center gap-2">
@@ -113,6 +140,17 @@ export default function ChatMessages({ messages, isStreaming, error }: ChatMessa
           )}
         </div>
       </div>
+      <div
+        data-testid="chat-processing"
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          left: -9999,
+          display: isStreaming ? 'block' : 'none',
+        }}
+      />
     </ScrollArea>
   );
 }
