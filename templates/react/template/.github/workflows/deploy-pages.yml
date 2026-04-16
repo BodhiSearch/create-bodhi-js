@@ -35,9 +35,11 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+      - name: Enable corepack (uses packageManager field)
+        run: corepack enable npm
       - run: npm ci
       - run: npm run build
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
 
@@ -48,5 +50,5 @@ jobs:
       name: github-pages
       url: $\{{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v5
         id: deployment
