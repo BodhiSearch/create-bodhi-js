@@ -8,8 +8,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Test environment variables
-.env.test
+# Test environment variables (real creds; e2e/.env.test.example is checked in)
+/e2e/.env.test
+
+# Scaffolds created for dev-testing inside this repo (should be scaffolded
+# outside this directory to avoid npm nested-install collisions).
+/my-test-app
+/test-app
 
 # Playwright outputs
 playwright-report
