@@ -54,7 +54,7 @@ export function buildModel(modelId: string, serverUrl: string, fmt: ApiFormat): 
 export function getServerUrlOrThrow(state: ClientState): string {
   if (!isDirectState(state) || !state.url) {
     throw new Error(
-      'Chat requires direct-mode Bodhi connection. Set VITE_BODHI_SERVER_URL to enable.'
+      'Chat requires a Bodhi server connection. Open Settings to connect to a server.'
     );
   }
   return state.url;

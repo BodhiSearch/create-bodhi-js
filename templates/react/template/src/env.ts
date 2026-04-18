@@ -2,7 +2,6 @@
 
 const AUTH_CLIENT_ID = import.meta.env.VITE_BODHI_APP_CLIENT_ID;
 const AUTH_SERVER_URL = import.meta.env.VITE_BODHI_AUTH_SERVER_URL || undefined;
-const BODHI_SERVER_URL = import.meta.env.VITE_BODHI_SERVER_URL || undefined;
 
 if (!AUTH_CLIENT_ID) {
   throw new Error(
@@ -12,4 +11,4 @@ if (!AUTH_CLIENT_ID) {
   );
 }
 
-export { AUTH_CLIENT_ID, AUTH_SERVER_URL, BODHI_SERVER_URL };
+export { AUTH_CLIENT_ID, AUTH_SERVER_URL };

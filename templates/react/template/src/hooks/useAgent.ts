@@ -10,6 +10,9 @@ import type { ApiFormat } from '@bodhiapp/bodhi-js-react/api';
 
 const SENTINEL_API_KEY = 'bodhiapp_sentinel_api_key_ignored';
 
+const EMPTY_MESSAGES: AgentMessage[] = [];
+const EMPTY_MODELS: BodhiModelInfo[] = [];
+
 let _agent: Agent | null = null;
 let _agentUnsub: (() => void) | null = null;
 let _tokenGetter: () => string | null = () => null;
@@ -130,11 +133,6 @@ export function useAgent(tools: AgentTool[]) {
   useEffect(() => {
     if (!isAuthenticated) {
       _agent?.abort();
-      setMessages([]);
-      setStreamingMessage(undefined);
-      setSelectedModelState('');
-      setModels([]);
-      setError(null);
     }
   }, [isAuthenticated]);
 
@@ -185,19 +183,19 @@ export function useAgent(tools: AgentTool[]) {
   }, []);
 
   return {
-    messages,
-    streamingMessage,
-    isStreaming,
-    selectedModel,
+    messages: isAuthenticated ? messages : EMPTY_MESSAGES,
+    streamingMessage: isAuthenticated ? streamingMessage : undefined,
+    isStreaming: isAuthenticated ? isStreaming : false,
+    selectedModel: isAuthenticated ? selectedModel : '',
     selectedApiFormat,
     setSelectedModel,
     sendMessage,
     stop,
     clearMessages,
-    error,
+    error: isAuthenticated ? error : null,
     clearError,
-    models,
-    isLoadingModels,
+    models: isAuthenticated ? models : EMPTY_MODELS,
+    isLoadingModels: isAuthenticated ? isLoadingModels : false,
     loadModels,
   };
 }

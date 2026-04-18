@@ -20,8 +20,7 @@
     "lint:fix": "eslint . --fix",
     "check": "npm run lint && npm run typecheck",
     "check:fix": "npm run lint:fix && npm run typecheck",
-    "test": "playwright test",
-    "test:headed": "playwright test --headed",
+    "test": "vitest run",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -54,7 +53,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@playwright/test": "^1.57.0",
     "@types/node": "^25.0.3",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
@@ -65,7 +63,8 @@
     "tsup": "^8.5.0",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.4"
+    "typescript-eslint": "^8.46.4",
+    "vitest": "^4.0.16"
   },
   "engines": {
     "node": ">=18.0.0"

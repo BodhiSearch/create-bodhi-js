@@ -3,6 +3,9 @@ import { useBodhi } from '@bodhiapp/bodhi-js-react';
 import { createMcpClient } from '@bodhiapp/bodhi-js-react/mcp';
 import { isMcpAvailable, type Mcp, type McpTool } from '@/lib/mcp-tools';
 
+const EMPTY_MCPS: Mcp[] = [];
+const EMPTY_TOOLS: Record<string, McpTool[]> = {};
+
 export function useMcpList() {
   const { client, isAuthenticated, isReady } = useBodhi();
   const [mcps, setMcps] = useState<Mcp[]>([]);
@@ -48,15 +51,24 @@ export function useMcpList() {
     }
   }, [client]);
 
+  // Dispatch on microtask so fetchMcps's setStates aren't synchronously
+  // reachable from the effect body (react-hooks/set-state-in-effect).
   useEffect(() => {
-    if (isReady && isAuthenticated) {
-      fetchMcps();
-    } else {
-      setMcps([]);
-      setToolsByMcpId({});
-      setError(null);
-    }
+    if (!isReady || !isAuthenticated) return;
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (!cancelled) fetchMcps();
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [isReady, isAuthenticated, fetchMcps]);
 
-  return { mcps, toolsByMcpId, isLoading, error, refresh: fetchMcps };
+  return {
+    mcps: isAuthenticated ? mcps : EMPTY_MCPS,
+    toolsByMcpId: isAuthenticated ? toolsByMcpId : EMPTY_TOOLS,
+    isLoading: isAuthenticated ? isLoading : false,
+    error: isAuthenticated ? error : null,
+    refresh: fetchMcps,
+  };
 }

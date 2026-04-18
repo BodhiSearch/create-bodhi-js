@@ -9,8 +9,8 @@ export class ChatPage {
     authenticated: '[data-testid="section-auth"][data-teststate="authenticated"]',
     clientReady: '[data-testid="badge-client-status"][data-teststate="ready"]',
     serverReady: '[data-testid="badge-server-status"][data-teststate="ready"]',
-    setupOverlay: '[data-testid="div-setup-overlay"]',
-    setupIframe: '[data-testid="iframe-setup"]',
+    setupOverlay: '[data-testid="div-setup-overlay-v2"]',
+    setupIframe: '[data-testid="iframe-setup-v2"]',
     chatInput: '[data-testid="chat-input"]',
     sendButton: '[data-testid="send-button"]',
     modelSelector: '[data-testid="model-selector"]',
@@ -32,21 +32,20 @@ export class ChatPage {
     await this.page.locator(this.selectors.setupIframe).waitFor({ state: 'attached' });
     const iframe = this.page.frameLocator(this.selectors.setupIframe);
 
-    // Server step: tick "I have installed the Bodhi App Server"
-    const checkbox = iframe.getByTestId('server-confirm-checkbox');
-    await checkbox.waitFor();
-    await checkbox.click();
+    // Wait for setup screen to render inside the iframe
+    await iframe.getByTestId('div-setup-screen').waitFor();
 
-    // Direct (LNA) step: fill URL and connect
-    const urlInput = iframe.getByTestId('lna-url-input');
-    await urlInput.waitFor();
+    // Fill server URL and connect
+    const urlInput = iframe.getByTestId('input-server-url');
     await urlInput.fill(bodhiServerUrl);
-    await iframe.getByTestId('lna-connect-button').click();
+    await iframe.getByTestId('btn-connect').click();
 
-    // Complete step: dismiss modal via "Continue to Webpage"
-    const continueButton = iframe.getByTestId('continue-button');
-    await continueButton.waitFor();
-    await continueButton.click();
+    // Wait for connected status then continue
+    await iframe
+      .getByTestId('text-probe-status-message')
+      .filter({ hasText: 'Server is connected' })
+      .waitFor();
+    await iframe.getByTestId('btn-continue').click();
 
     await this.page.locator(this.selectors.setupOverlay).waitFor({ state: 'hidden' });
   }

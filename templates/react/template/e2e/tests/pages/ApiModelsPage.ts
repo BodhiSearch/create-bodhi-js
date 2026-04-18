@@ -44,7 +44,9 @@ export class ApiModelsPage {
     await this.page.waitForSelector(this.selectors.modelOption(modelName), { state: 'visible' });
     await this.page.click(this.selectors.modelOption(modelName));
 
-    await this.page.click(this.selectors.createButton);
+    const createButton = this.page.locator(this.selectors.createButton);
+    await createButton.scrollIntoViewIfNeeded();
+    await createButton.click();
     await this.page.waitForURL(/\/ui\/models(?!\/api\/new)/);
     await this.page.waitForLoadState('networkidle');
   }

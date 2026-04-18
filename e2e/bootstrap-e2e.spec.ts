@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -12,31 +12,36 @@ const __dirname = path.dirname(__filename);
 const TEMPLATE_PATH = path.resolve(__dirname, '../templates/react');
 const PROJECT_NAME = 'my-test-app';
 
-test.describe('Bootstrapped project e2e', () => {
-  let scaffold: ScaffoldResult | undefined;
+describe('Bootstrapped project e2e', () => {
+  let scaffold: ScaffoldResult;
+  let devClientId: string;
 
-  test.beforeAll(async () => {
+  beforeAll(async () => {
     validateEnv();
-    const devClientId = requireEnv('DEV_CLIENT_ID');
+    devClientId = requireEnv('DEV_CLIENT_ID');
     scaffold = await scaffoldProject({
       projectName: PROJECT_NAME,
       template: TEMPLATE_PATH,
       devClientId,
       githubPages: true,
       githubOrg: 'tempOrg',
-      noInstall: true,
+      noInstall: false,
     });
+    console.log(`[bootstrap-e2e] Project dir: ${scaffold.projectDir}`);
   });
 
-  test.afterAll(async () => {
-    await scaffold?.cleanup();
+  test('npm run check passes on scaffold with no local changes', () => {
+    const { projectDir } = scaffold;
+    execSync('npm run check', { cwd: projectDir, stdio: 'inherit', timeout: 120_000 });
+    const diff = execSync('git diff', { cwd: projectDir, encoding: 'utf-8' });
+    expect(
+      diff,
+      `npm run check left local changes in the scaffolded project; regenerate template with lint-clean output:\n${diff}`
+    ).toBe('');
   });
 
   test('scaffolded project passes its own ci:test:e2e', () => {
-    if (!scaffold) throw new Error('beforeAll did not produce a scaffold');
     const { projectDir } = scaffold;
-
-    execSync('npm install', { cwd: projectDir, stdio: 'inherit', timeout: 300_000 });
     execSync('npx playwright install chromium', {
       cwd: projectDir,
       stdio: 'inherit',
@@ -54,7 +59,7 @@ test.describe('Bootstrapped project e2e', () => {
       `BODHIAPP_AUTH_URL=${authUrl}`,
       `BODHIAPP_AUTH_REALM=${authRealm}`,
       `OPENAI_API_KEY=${requireEnv('OPENAI_API_KEY')}`,
-      `VITE_BODHI_APP_CLIENT_ID=${requireEnv('DEV_CLIENT_ID')}`,
+      `VITE_BODHI_APP_CLIENT_ID=${devClientId}`,
       `VITE_BODHI_AUTH_SERVER_URL=${authUrl}/realms/${authRealm}`,
       '',
     ];

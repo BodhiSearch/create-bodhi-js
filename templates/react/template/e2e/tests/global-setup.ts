@@ -1,6 +1,7 @@
 import { chromium, FullConfig } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
 import { readFileSync, unlinkSync, writeFileSync, existsSync, rmSync } from 'fs';
+import { createConnection } from 'net';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -26,10 +27,35 @@ export function getTestState(): TestState {
 export const isHeadless = process.env.HEADLESS === 'true' || process.env.CI === 'true';
 
 export const BODHI_SERVER_PORT = 51135;
+export const BODHI_DEFAULT_PORT = 1135;
 export const BODHI_SERVER_URL = `http://localhost:${BODHI_SERVER_PORT}`;
 export const API_MODEL_PREFIX = 'oai/';
 export const API_MODEL_NAME = 'gpt-4.1-nano';
 export const FULL_MODEL_ID = `${API_MODEL_PREFIX}${API_MODEL_NAME}`;
+
+function isPortInUse(port: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const socket = createConnection({ port, host: 'localhost' });
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once('error', () => {
+      resolve(false);
+    });
+  });
+}
+
+async function assertPortsFree(): Promise<void> {
+  const portsToCheck = [BODHI_SERVER_PORT, BODHI_DEFAULT_PORT];
+  for (const port of portsToCheck) {
+    if (await isPortInUse(port)) {
+      throw new Error(
+        `Port ${port} is already in use. Stop the server running on port ${port} before running the tests.`
+      );
+    }
+  }
+}
 
 const REQUIRED_ENV_VARS = [
   'BODHIAPP_CLIENT_ID',
@@ -81,6 +107,8 @@ async function globalSetup(_: FullConfig) {
       `Missing required environment variables in e2e/.env.test: ${missing.join(', ')}`
     );
   }
+
+  await assertPortsFree();
 
   const binPath = resolveBinPath();
 

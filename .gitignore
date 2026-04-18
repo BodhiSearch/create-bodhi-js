@@ -16,10 +16,6 @@ lerna-debug.log*
 /my-test-app
 /test-app
 
-# Playwright outputs
-playwright-report
-test-results
-
 # Template artifacts (when developing locally inside template/)
 templates/*/template/node_modules
 templates/*/template/dist

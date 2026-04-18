@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { scaffoldProject, type ScaffoldResult } from './test-utils.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -47,10 +47,10 @@ function assertNoRawHandlebars(content: string, relPath: string): void {
   }
 }
 
-test.describe('Template Processing', () => {
+describe('Template Processing', () => {
   let scaffold: ScaffoldResult;
 
-  test.beforeAll(async () => {
+  beforeAll(async () => {
     scaffold = await scaffoldProject({
       projectName: PROJECT_NAME,
       template: TEMPLATE_PATH,
@@ -63,7 +63,7 @@ test.describe('Template Processing', () => {
     });
   });
 
-  test.afterAll(async () => {
+  afterAll(async () => {
     await scaffold.cleanup();
   });
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useBodhi } from '@bodhiapp/bodhi-js-react';
 import { createMcpClient } from '@bodhiapp/bodhi-js-react/mcp';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -24,7 +24,9 @@ export function useMcpAgentTools({
   toolsByMcpId,
 }: UseMcpAgentToolsInput): AgentTool[] {
   const { client } = useBodhi();
-  const clientsRef = useRef<Map<string, Client>>(new Map());
+  // useState (not useRef) to hold this mutable cache: refs captured by
+  // closures created during render trip react-hooks/refs.
+  const [clientsCache] = useState<Map<string, Client>>(() => new Map());
 
   const mcpBySlug = useMemo(() => {
     const map = new Map<string, Mcp>();
@@ -33,14 +35,13 @@ export function useMcpAgentTools({
   }, [mcps]);
 
   useEffect(() => {
-    const clients = clientsRef.current;
     return () => {
-      for (const c of clients.values()) {
+      for (const c of clientsCache.values()) {
         c.close().catch(() => {});
       }
-      clients.clear();
+      clientsCache.clear();
     };
-  }, []);
+  }, [clientsCache]);
 
   return useMemo(() => {
     const tools: AgentTool[] = [];
@@ -71,10 +72,10 @@ export function useMcpAgentTools({
             const target = mcpBySlug.get(decoded.mcpSlug);
             if (!target) throw new Error(`Unknown MCP slug: ${decoded.mcpSlug}`);
 
-            let mcpClient = clientsRef.current.get(decoded.mcpSlug);
+            let mcpClient = clientsCache.get(decoded.mcpSlug);
             if (!mcpClient) {
               mcpClient = await createMcpClient(client, target.path);
-              clientsRef.current.set(decoded.mcpSlug, mcpClient);
+              clientsCache.set(decoded.mcpSlug, mcpClient);
             }
 
             const result = await mcpClient.callTool({
@@ -103,5 +104,5 @@ export function useMcpAgentTools({
     }
 
     return tools;
-  }, [enabledMcpTools, mcps, toolsByMcpId, mcpBySlug, client]);
+  }, [enabledMcpTools, mcps, toolsByMcpId, mcpBySlug, client, clientsCache]);
 }

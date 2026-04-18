@@ -96,6 +96,7 @@ export class BodhiServerManager {
       BODHI_EXEC_LOOKUP_PATH,
       BODHI_KEEP_ALIVE_SECS,
       BODHI_DEPLOYMENT,
+      BODHI_HOME,
       BODHI_ENCRYPTION_KEY,
     } = appBindings;
 
@@ -103,6 +104,7 @@ export class BodhiServerManager {
 
     const home = this.config.home || this.tempHome!;
     napiConfig = setEnvVar(napiConfig, 'HOME', home);
+    napiConfig = setEnvVar(napiConfig, BODHI_HOME, home);
     napiConfig = setEnvVar(napiConfig, BODHI_HOST, this.config.host!);
     napiConfig = setEnvVar(napiConfig, BODHI_PORT, this.actualPort!.toString());
 
