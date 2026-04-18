@@ -2,7 +2,8 @@ import os from 'os';
 import { defineConfig, devices } from '@playwright/test';
 
 const isCI = !!process.env.CI;
-const isHeadless = process.env.HEADLESS === 'true' || isCI;
+const isHeadless =
+  process.env.HEADLESS === 'false' ? false : process.env.HEADLESS === 'true' || isCI;
 const baseURL = 'http://localhost:5173{{basePath}}';
 
 function buildUserAgent(): string {

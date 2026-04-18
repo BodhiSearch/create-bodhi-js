@@ -24,7 +24,10 @@ export function getTestState(): TestState {
   return JSON.parse(readFileSync(STATE_FILE, 'utf-8'));
 }
 
-export const isHeadless = process.env.HEADLESS === 'true' || process.env.CI === 'true';
+export const isHeadless =
+  process.env.HEADLESS === 'false'
+    ? false
+    : process.env.HEADLESS === 'true' || process.env.CI === 'true';
 
 export const BODHI_SERVER_PORT = 51135;
 export const BODHI_DEFAULT_PORT = 1135;

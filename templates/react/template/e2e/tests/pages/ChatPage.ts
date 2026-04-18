@@ -67,15 +67,18 @@ export class ChatPage {
     // Access request review → uncheck every MCP checkbox so approve isn't
     // gated on MCP instances existing on the server → approve role-only.
     await this.page.waitForURL(/\/access-requests\/review/);
-    const checkboxes = this.page.locator('[role="checkbox"]');
-    const count = await checkboxes.count();
+    const approveButton = this.page.getByTestId('review-approve-button');
+    await approveButton.waitFor();
+    const mcpToggles = this.page.locator('[data-testid^="review-mcp-toggle-"]');
+    const count = await mcpToggles.count();
     for (let i = 0; i < count; i++) {
-      const checkbox = checkboxes.nth(i);
-      if (await checkbox.isChecked().catch(() => false)) {
-        await checkbox.click();
+      const toggle = mcpToggles.nth(i);
+      if ((await toggle.getAttribute('aria-checked')) === 'true') {
+        await toggle.click();
       }
     }
-    await this.page.getByRole('button', { name: /Approve/ }).click();
+    await expect(approveButton).toBeEnabled();
+    await approveButton.click();
 
     // After approve: Keycloak SSO auto-completes the PKCE flow (same browser
     // context as the login above), redirecting back to the app via 302 chain.
