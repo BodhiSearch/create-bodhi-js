@@ -88,7 +88,7 @@ export async function scaffold(options: ScaffoldOptions) {
   }
 
   // Rename dotfiles (underscore prefix to dot prefix)
-  const dotfiles = ['_gitignore', '_editorconfig', '_prettierrc', '_prettierignore'];
+  const dotfiles = ['_gitignore', '_editorconfig', '_prettierrc', '_prettierignore', '_npmrc'];
   for (const file of dotfiles) {
     const oldPath = path.join(targetDir, file);
     const newPath = path.join(targetDir, file.replace('_', '.'));
