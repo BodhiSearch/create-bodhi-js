@@ -1,12 +1,17 @@
+import { readFileSync } from 'node:fs';
 import { Command } from 'commander';
 import { create } from './cli.js';
+
+const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8')) as {
+  version: string;
+};
 
 const program = new Command();
 
 program
   .name('create-bodhi-js')
   .description('Scaffold Bodhi-powered applications')
-  .version('0.1.0')
+  .version(pkg.version)
   .argument('[project-name]', 'Name of the project')
   .option('-t, --template <name>', 'Template name or local path', 'react')
   .option('--no-install', 'Skip dependency installation')
