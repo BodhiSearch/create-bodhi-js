@@ -49,6 +49,7 @@ export function useAgent(tools: AgentTool[]) {
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [selectedModel, setSelectedModelState] = useState<string>('');
   const [selectedApiFormat, setSelectedApiFormat] = useState<ApiFormat>('openai');
+  const [selectedLlmLibertyProvider, setSelectedLlmLibertyProvider] = useState<string | null>(null);
 
   const authTokenRef = useRef<string | null>(auth.accessToken);
   const toolsRef = useRef<AgentTool[]>(tools);
@@ -114,6 +115,7 @@ export function useAgent(tools: AgentTool[]) {
       if (list.length > 0 && !selectedModel) {
         setSelectedModelState(list[0].id);
         setSelectedApiFormat(list[0].apiFormat);
+        setSelectedLlmLibertyProvider(list[0].llmLibertyProvider ?? null);
       }
     } catch (err) {
       console.error('Failed to fetch models:', err);
@@ -136,10 +138,14 @@ export function useAgent(tools: AgentTool[]) {
     }
   }, [isAuthenticated]);
 
-  const setSelectedModel = useCallback((id: string, fmt: ApiFormat) => {
-    setSelectedModelState(id);
-    setSelectedApiFormat(fmt);
-  }, []);
+  const setSelectedModel = useCallback(
+    (id: string, fmt: ApiFormat, provider: string | null = null) => {
+      setSelectedModelState(id);
+      setSelectedApiFormat(fmt);
+      setSelectedLlmLibertyProvider(provider);
+    },
+    []
+  );
 
   const sendMessage = useCallback(
     async (prompt: string) => {
@@ -151,7 +157,12 @@ export function useAgent(tools: AgentTool[]) {
 
       const serverUrl = getServerUrlOrThrow(client.getState());
       const agent = getOrCreateAgent();
-      agent.state.model = buildModel(selectedModel, serverUrl, selectedApiFormat);
+      agent.state.model = buildModel(
+        selectedModel,
+        serverUrl,
+        selectedApiFormat,
+        selectedLlmLibertyProvider
+      );
       agent.state.tools = toolsRef.current;
       agent.state.systemPrompt = '';
 
@@ -163,7 +174,7 @@ export function useAgent(tools: AgentTool[]) {
         setError(getErrorMessage(err, 'Failed to send message'));
       }
     },
-    [client, selectedModel, selectedApiFormat]
+    [client, selectedModel, selectedApiFormat, selectedLlmLibertyProvider]
   );
 
   const stop = useCallback(() => {

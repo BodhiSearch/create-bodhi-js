@@ -9,6 +9,7 @@ import type {
 export interface BodhiModelInfo {
   id: string;
   apiFormat: ApiFormat;
+  llmLibertyProvider?: string | null;
 }
 
 function modelId(m: ApiModel): string | undefined {
@@ -22,10 +23,12 @@ function flattenAlias(entry: AliasResponse): BodhiModelInfo[] {
   if ('models' in entry) {
     const prefix = entry.prefix ?? '';
     const fmt = entry.api_format ?? 'openai';
+    const llmLibertyProvider =
+      'llm_liberty' in entry ? (entry.llm_liberty?.provider ?? null) : null;
     return (entry.models ?? [])
       .map(m => {
         const id = modelId(m);
-        return id ? { id: `${prefix}${id}`, apiFormat: fmt } : null;
+        return id ? { id: `${prefix}${id}`, apiFormat: fmt, llmLibertyProvider } : null;
       })
       .filter((x): x is BodhiModelInfo => x !== null);
   }

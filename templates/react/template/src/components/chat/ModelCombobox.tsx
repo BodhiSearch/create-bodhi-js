@@ -10,7 +10,7 @@ import type { ApiFormat } from '@bodhiapp/bodhi-js-react/api';
 interface ModelComboboxProps {
   models: BodhiModelInfo[];
   selected: string;
-  onSelect: (id: string, fmt: ApiFormat) => void;
+  onSelect: (id: string, fmt: ApiFormat, provider: string | null) => void;
   disabled?: boolean;
 }
 
@@ -78,7 +78,7 @@ export default function ModelCombobox({
                 aria-selected={selected === m.id}
                 data-testid={`model-option-${m.id}`}
                 onClick={() => {
-                  onSelect(m.id, m.apiFormat);
+                  onSelect(m.id, m.apiFormat, m.llmLibertyProvider ?? null);
                   setSearch('');
                   setOpen(false);
                 }}

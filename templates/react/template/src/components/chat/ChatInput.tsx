@@ -13,7 +13,7 @@ interface ChatInputProps {
   onSendMessage: (message: string) => Promise<void>;
   onClearMessages: () => void;
   selectedModel: string;
-  setSelectedModel: (id: string, fmt: ApiFormat) => void;
+  setSelectedModel: (id: string, fmt: ApiFormat, provider: string | null) => void;
   models: BodhiModelInfo[];
   isLoadingModels: boolean;
   onRefreshModels: () => void;

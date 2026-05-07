@@ -9,7 +9,7 @@ export type PiApi =
   | 'anthropic-messages'
   | 'google-generative-ai';
 
-export function apiFormatToPiApi(fmt: ApiFormat): PiApi {
+export function apiFormatToPiApi(fmt: ApiFormat, provider?: string | null): PiApi {
   switch (fmt) {
     case 'openai_responses':
       return 'openai-responses';
@@ -18,31 +18,51 @@ export function apiFormatToPiApi(fmt: ApiFormat): PiApi {
       return 'anthropic-messages';
     case 'gemini':
       return 'google-generative-ai';
+    case 'llm_liberty_oauth':
+      if (provider === 'anthropic') return 'anthropic-messages';
+      if (provider === 'openai-codex') return 'openai-responses';
+      if (provider === 'google-gemini') return 'google-generative-ai';
+      return 'openai-completions';
     default:
       return 'openai-completions';
   }
 }
 
-export function apiFormatToProvider(fmt: ApiFormat): string {
+export function apiFormatToProvider(fmt: ApiFormat, provider?: string | null): string {
   if (fmt === 'anthropic' || fmt === 'anthropic_oauth') return 'anthropic';
   if (fmt === 'gemini') return 'google';
+  if (fmt === 'llm_liberty_oauth') {
+    if (provider === 'anthropic') return 'anthropic';
+    if (provider === 'openai-codex') return 'openai';
+    if (provider === 'google-gemini') return 'google';
+  }
   return 'openai';
 }
 
-export function getBaseUrl(serverUrl: string, fmt: ApiFormat): string {
+export function getBaseUrl(serverUrl: string, fmt: ApiFormat, provider?: string | null): string {
   const trimmed = serverUrl.replace(/\/$/, '');
   if (fmt === 'anthropic' || fmt === 'anthropic_oauth') return `${trimmed}/anthropic`;
   if (fmt === 'gemini') return `${trimmed}/v1beta`;
+  if (fmt === 'llm_liberty_oauth') {
+    if (provider === 'anthropic') return `${trimmed}/anthropic`;
+    if (provider === 'google-gemini') return `${trimmed}/v1beta`;
+    return `${trimmed}/v1`;
+  }
   return `${trimmed}/v1`;
 }
 
-export function buildModel(modelId: string, serverUrl: string, fmt: ApiFormat): Model<PiApi> {
+export function buildModel(
+  modelId: string,
+  serverUrl: string,
+  fmt: ApiFormat,
+  provider?: string | null
+): Model<PiApi> {
   return {
     id: modelId,
     name: modelId,
-    api: apiFormatToPiApi(fmt),
-    provider: apiFormatToProvider(fmt),
-    baseUrl: getBaseUrl(serverUrl, fmt),
+    api: apiFormatToPiApi(fmt, provider),
+    provider: apiFormatToProvider(fmt, provider),
+    baseUrl: getBaseUrl(serverUrl, fmt, provider),
     reasoning: false,
     input: ['text'],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
