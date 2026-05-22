@@ -26,7 +26,7 @@ function flattenAlias(entry: AliasResponse): BodhiModelInfo[] {
     const llmLibertyProvider =
       'llm_liberty' in entry ? (entry.llm_liberty?.provider ?? null) : null;
     return (entry.models ?? [])
-      .map(m => {
+      .map((m): BodhiModelInfo | null => {
         const id = modelId(m);
         return id ? { id: `${prefix}${id}`, apiFormat: fmt, llmLibertyProvider } : null;
       })

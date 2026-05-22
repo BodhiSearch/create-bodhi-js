@@ -97,6 +97,31 @@ The React template source lives in `templates/react/` in this monorepo. The exte
 
 When published to npm, the CLI still fetches from the external GitHub repo via giget at runtime. For local development and E2E tests, use `--template ./templates/react`.
 
+### ⚠️ Never lint/typecheck/build `templates/` directly
+
+The files under `templates/react/template/` are **Handlebars source, not valid TypeScript/JS**. They contain unprocessed placeholders such as `clientConfig=\{{`, `{{{mcpBuilderCalls}}}`, and `{{#if}}` blocks. Running `tsc`, `vite build`, or `eslint` against `templates/react/template/` **will fail with syntax errors** (e.g. `TS1127: Invalid character`) — this is expected and is **not** a regression.
+
+To verify a template change (e.g. after bumping `@bodhiapp/*` deps), scaffold a real project and run checks on the **generated** app — this is exactly what CI's `template-e2e` job in `.github/workflows/ci.yml` does:
+
+```bash
+# 1. Build the CLI, then scaffold a throwaway app from the local template
+npm run build
+node dist/index.js test-app \
+  --template ./templates/react \
+  --ci --no-install --no-git --no-github-pages \
+  --mcp-servers "https://mcp.exa.ai/mcp" \
+  --dev-client-id "$VITE_BODHI_APP_CLIENT_ID"
+
+# 2. Install deps in a SEPARATE step (inline --install breaks Playwright via nested symlinks)
+cd test-app && npm install
+
+# 3. Run checks against the generated app (NOT against templates/)
+npm run lint && npm run typecheck && npm run build && npm test
+npm run ci:test:e2e   # requires e2e/.env.test with BODHIAPP_* creds + a running Bodhi server
+```
+
+Note on the lockfile: `templates/react/template/package-lock.json` and `node_modules/` are **gitignored** — they are NOT committed and NOT shipped. The template ships only `package.json`; each scaffolded app generates its own lockfile on `npm install`. So when bumping deps you only edit `package.json` — there is no lockfile to commit. To sanity-check that the new versions actually resolve before relying on a full scaffold, you can temporarily copy `_npmrc` → `.npmrc` (it sets `include=optional` so all platform-specific `@bodhiapp/app-bindings-*` binaries resolve, not just the host's), run `npm install` inside `templates/react/template/`, then delete the temporary `.npmrc` — but the real verification is the scaffold-and-check flow above.
+
 ## Release Process
 
 **Automated via GitHub Actions** (.github/workflows/publish.yml):
