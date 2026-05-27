@@ -9,8 +9,6 @@ export class ChatPage {
     authenticated: '[data-testid="section-auth"][data-teststate="authenticated"]',
     clientReady: '[data-testid="badge-client-status"][data-teststate="ready"]',
     serverReady: '[data-testid="badge-server-status"][data-teststate="ready"]',
-    setupOverlay: '[data-testid="div-setup-overlay-v2"]',
-    setupIframe: '[data-testid="iframe-setup-v2"]',
     chatInput: '[data-testid="chat-input"]',
     sendButton: '[data-testid="send-button"]',
     modelSelector: '[data-testid="model-selector"]',
@@ -21,33 +19,10 @@ export class ChatPage {
       `[data-testid="chat-message-turn-${turn}"][data-messagetype="${role}"]`,
   };
 
-  async waitServerReady(bodhiServerUrl: string): Promise<void> {
+  async waitServerReady(): Promise<void> {
     await this.page.locator(this.selectors.appTitle).waitFor();
-    await this.walkSetupModal(bodhiServerUrl);
     await this.page.locator(this.selectors.clientReady).waitFor();
     await this.page.locator(this.selectors.serverReady).waitFor();
-  }
-
-  private async walkSetupModal(bodhiServerUrl: string): Promise<void> {
-    await this.page.locator(this.selectors.setupIframe).waitFor({ state: 'attached' });
-    const iframe = this.page.frameLocator(this.selectors.setupIframe);
-
-    // Wait for setup screen to render inside the iframe
-    await iframe.getByTestId('div-setup-screen').waitFor();
-
-    // Fill server URL and connect
-    const urlInput = iframe.getByTestId('input-server-url');
-    await urlInput.fill(bodhiServerUrl);
-    await iframe.getByTestId('btn-connect').click();
-
-    // Wait for connected status then continue
-    await iframe
-      .getByTestId('text-probe-status-message')
-      .filter({ hasText: 'Server is connected' })
-      .waitFor();
-    await iframe.getByTestId('btn-continue').click();
-
-    await this.page.locator(this.selectors.setupOverlay).waitFor({ state: 'hidden' });
   }
 
   async login(credentials: { username: string; password: string }): Promise<void> {

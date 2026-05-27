@@ -45,5 +45,8 @@ export default defineConfig({
     command: 'npm run dev -- --port 55173',
     url: baseURL,
     reuseExistingServer: false,
+    env: {
+      VITE_BODHIAPP_DEFAULT_HOST: 'http://localhost:51135',
+    },
   },
 });

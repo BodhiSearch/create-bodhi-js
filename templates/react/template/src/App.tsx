@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { BodhiProvider, useBodhi, BodhiBadge } from '@bodhiapp/bodhi-js-react';
 import { Toaster } from '@/components/ui/sonner';
-import { AUTH_CLIENT_ID, AUTH_SERVER_URL } from './env';
+import { AUTH_CLIENT_ID, AUTH_SERVER_URL, DEFAULT_HOST } from './env';
 import Layout from './components/Layout';
 
 const BASE_PATH = import.meta.env.BASE_URL;
@@ -36,7 +36,7 @@ function App() {
         ...(AUTH_SERVER_URL && { authServerUrl: AUTH_SERVER_URL }),
       }}
       basePath={BASE_PATH}
-      defaultHost={import.meta.env.DEV ? 'http://localhost:55311' : undefined}
+      {...(DEFAULT_HOST && { defaultHost: DEFAULT_HOST })}
     >
       <AppContent />
       <div className="fixed bottom-4 right-6 z-50">
